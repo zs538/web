@@ -1,1 +1,17 @@
+https://desktop.github.com/download/
+https://code.visualstudio.com/download
+https://nodejs.org/en
+
+---------------------------------------------
+
+
 https://svelte.dev/docs/kit/introduction
+
+
+---------------------------------------------
+
+https://github.com/zs538/web
+
+vscode terminal (ctrl+shift+;):
+cd my-app
+npm run dev
