@@ -3,7 +3,7 @@ naučit se vývoj webové stránky/sveltkit
 úspěšný scrum prjekt
 responzivní sociální síť
 
-požadavky:
+požadavky webu:
 
 global feed
 profile
