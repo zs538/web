@@ -1,0 +1,10 @@
+cíl:
+naučit se vývoj webové stránky/sveltkit
+úspěšný scrum prjekt
+responzivní sociální síť
+
+požadavky:
+
+global feed
+profile
+login/acc request

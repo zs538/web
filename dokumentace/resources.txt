@@ -4,8 +4,9 @@ https://nodejs.org/en
 
 ---------------------------------------------
 
-
+https://svelte.dev/tutorial/kit/introducing-sveltekit
 https://svelte.dev/docs/kit/introduction
+https://svelte.dev/playground
 
 
 ---------------------------------------------
