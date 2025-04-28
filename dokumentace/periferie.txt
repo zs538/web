@@ -1,0 +1,76 @@
+SvelteKit je moderní framework pro tvorbu webových aplikací postavený na knihovně Svelte. Usnadňuje vývoj složitějších a produkčně připravených aplikací tím, že nabízí například směrování, server-side rendering (SSR), statickou generaci stránek, správu dat a jednoduché nasazení na různé platformy.
+
+Klady
+Vysoký výkon: Díky předkompilaci je výsledná aplikace rychlá a efektivní.
+
+Jednoduchost: Minimalistický a přehledný kód, snadná údržba.
+
+Malá velikost výsledné aplikace: Aplikace se rychle načítají.
+
+Moderní funkce: Podpora SSR, SSG, snadné routování a další pokročilé možnosti rovnou „z krabice“.
+
+Výborné pro SEO: Serverové vykreslování pomáhá s vyhledávači.
+
+Zápory
+Menší komunita: Méně hotových knihoven, příkladů a podpory než u větších frameworků jako React nebo Vue.
+
+Nutnost překompilování: Změny v kódu vyžadují překompilaci, což může zpomalit vývoj, pokud není dobře nastavené prostředí.
+
+Méně ověřený u velkých projektů: SvelteKit zatím používá méně velkých firem, takže je méně zkušeností s opravdu rozsáhlými aplikacemi.
+
+Shrnutí:
+SvelteKit je rychlý, moderní a jednoduchý framework na tvorbu webových aplikací, který usnadňuje složitější vývoj, ale má menší komunitu a ekosystém než zavedenější konkurenti.
+
+
+
+1. ESLint (Linter)
+Co dělá: Nástroj, který identifikuje problematické vzory ve vašem JavaScript/TypeScript kódu a pomáhá vám tak vylepšit styl kódování a zabránit chybám už v počátku.
+Výhody: Zlepšuje konzistenci a kvalitu kódu, odhaluje syntaktické chyby.
+Nevýhody: Může být časově náročné nastavit vlastní pravidla a nemusí vyhovovat stylu kódování každého vývojáře.
+Zpětná vazba: Uživatelé obecně oceňují ochranu proti běžným chybám v kódu, ale někteří mohou mít pocit, že je příliš přísný, pokud není správně nakonfigurován.
+
+2. SvelteKit Adapter
+Co dělá: Umožňuje nasadit vaši SvelteKit aplikaci na různá prostředí (například statický hosting, Vercel, Netlify) výběrem adaptéru podle požadované platformy.
+Výhody: Flexibilita v možnostech nasazení.
+Nevýhody: Přímo žádné, ale je třeba znát kontext cílové platformy.
+Zpětná vazba: Uživatelé si často cení možnosti snadné volby strategie nasazení podle svých potřeb.
+
+3. Drizzle
+Co dělá: ORM (Object-Relational Mapping) pro správu komunikace s databází bezpečným způsobem s podporou TypeScriptu.
+Výhody: Zjednodušuje práci s databází, zajišťuje typovou bezpečnost.
+Nevýhody: Může přidat režii (overhead), zvláště pokud je databázové schéma složité.
+Zpětná vazba: Vývojáři oceňují bezpečné typování, ale někdy je třeba najít rovnováhu mezi výkonem a jednoduchostí.
+
+4. Lucia
+Co dělá: Moderní autentizační řešení pro SvelteKit aplikace, umožňuje snadno přidat přihlašování, registraci apod.
+Výhody: Snadné nastavení autentizace.
+Nevýhody: Může mít omezení dle specifických potřeb projektu.
+Zpětná vazba: Obecně kladně přijímán díky jednoduchosti a snadné integraci.
+
+5. Mdsvex
+Co dělá: Umožní používat Markdown soubory jako Svelte komponenty – vhodné pro blogy či dokumentaci.
+Výhody: Zjednodušuje správu obsahu v Markdownu v rámci Svelte aplikací.
+Nevýhody: Omezeno pouze na integraci s Markdownem.
+Zpětná vazba: Oblíbené mezi těmi, kdo často využívají obsah v Markdownu.
+
+6. Storybook
+Co dělá: Nástroj pro vývoj, testování a dokumentování UI komponent izolovaně od zbytku aplikace.
+Výhody: Zlepšuje opětovné využití a dokumentaci komponent.
+Nevýhody: Vyžaduje určitou dobu na naučení a nastavení.
+Zpětná vazba: Oceňován pro efektivitu při vývoji a prezentaci UI komponent.
+
+Shrnutí:
+
+ESLint pomáhá udržovat kvalitu kódu.
+
+SvelteKit Adapter poskytuje flexibilitu v nasazení aplikace.
+
+Drizzle usnadňuje bezpečnou práci s databází.
+
+Lucia zjednodušuje autentizaci uživatelů.
+
+Mdsvex umožňuje využití Markdownu v Svelte aplikacích.
+
+Storybook usnadňuje vývoj a dokumentaci UI komponent.
+
+Tyto nástroje obvykle zlepšují vývojářskou zkušenost, ale jejich skutečná užitečnost závisí na vašich konkrétních potřebách a pracovních postupech. Zpětná vazba často vyzdvihuje jejich přínos, ale může zmiňovat i výzvy při nastavování či učení.
