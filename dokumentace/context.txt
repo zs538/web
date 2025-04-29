@@ -122,6 +122,7 @@ Homepage/feed route is NOT fully implemented yet.
 (
 So far displaying one post from the seed.ts sucessfully
 Next steps you might take:
+Create UI Components
 Display the username instead of just the user ID by joining with user data.
 Add more posts or seed more data to see multiple items in the feed.
 Add profile images, timestamps, or media fields in the feed display.
@@ -137,3 +138,57 @@ The next development steps are to implement user profile editing, media uploads,
 Summary:
 You have finished the full backend and database setup, tested seeding, verified authentication, and built out routing and a dynamic, database-driven feed page. The focus now is on connecting the remaining features—profiles, post creation/editing, comments, and moderation—to complete the core social experience of your Tumblr-like prototype.
 
+my-project src tree
+
+src
+|   app.d.ts
+|   app.html
+|   hooks.server.ts
+|
++---lib
+|   |   index.ts
+|   |
+|   +---components
+|   |       Post.svelte
+|   |       PostsSection.svelte
+|   |
+|   \---server
+|       |   auth.ts
+|       |
+|       \---db
+|               index.ts
+|               schema.ts
+|               seed.ts
+|
+\---routes
+    |   +page.svelte
+    |
+    +---404
+    +---about
+    +---demo
+    |   |   +page.svelte
+    |   |
+    |   \---lucia
+    |       |   +page.server.ts
+    |       |   +page.svelte
+    |       |
+    |       \---login
+    |               +page.server.ts
+    |               +page.svelte
+    |
+    +---homepage
+    |       +page.server.ts
+    |       +page.svelte
+    |
+    +---login
+    +---logout
+    +---post
+    |   |   +page.svelte
+    |   |
+    |   +---new
+    |   \---[id]
+    +---profile
+    |   \---[username]
+    |       \---edit
+    +---search
+    \---settings
