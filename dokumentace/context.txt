@@ -76,6 +76,30 @@ Extensible structure for adding features such as TailwindCSS later
 
 --------------------------------------------------------------------------------------------------------------------------------
 
+Modular Component-Based UI Architecture (Generalized Idea for the Whole Website):
+
+The website will use a modular, component-driven UI design. Each distinct section of a page—such as the posts feed, user profile, comment thread, or media gallery—will be implemented as its own Svelte component. Within these sections, repeated or complex items (like individual posts, a single comment, or a media element) will also be their own reusable sub-components.
+
+Pages will be composed by assembling these building-block components, passing data via props and using slot composition where necessary. For example:
+
+The feed page will use a posts-section component that iterates over post data and renders a post component for each item.
+
+User profiles can use a profile-summary and a user-posts-list, each of which could use further sub-components.
+
+Comment threads, navigation menus, forms, and notifications can each be modular and reusable.
+
+This component-based approach is not just for the homepage, but forms the structural pattern for the entire site. It enables:
+
+Rapid development and easy UI changes (change one component’s style or behavior and all usages are updated).
+
+Consistency, maintainability, and scalability as features and routes expand.
+
+Straightforward testing and reuse of logic and UI.
+
+Summary - The website's UI will be built as a hierarchy of reusable, encapsulated Svelte components—for collections (like lists of posts or comments) and for individual items (like a single post or a single comment)—and this pattern will be used across all routes and pages for a consistent, maintainable, and scalable application.
+
+--------------------------------------------------------------------------------------------------------------------------------
+
 Project Progress (Current Status)
 
 Technology stack is fully set up, including SvelteKit, Drizzle ORM, and SQLite.
@@ -86,11 +110,19 @@ Seed script has been implemented and has loaded test users and posts into the da
 
 SvelteKit routes are scaffolded in the filesystem for core pages (feed, profile, post detail, etc.).
 
+Database connection through Drizzle is tested and works.
+
 Lucia authentication is installed but has NOT been tested yet.
 
-Database connection through Drizzle is NOT tested yet.
-
-Homepage/feed route is NOT implemented yet.
+Homepage/feed route is NOT fully implemented yet. 
+(
+So far displaying one post from the seed.ts sucessfully
+Next steps you might take:
+Display the username instead of just the user ID by joining with user data.
+Add more posts or seed more data to see multiple items in the feed.
+Add profile images, timestamps, or media fields in the feed display.
+Build on this by connecting other routes (post detail, profile, comment, etc.) to your database.
+)
 
 Only routs are created with empty pages.
 
