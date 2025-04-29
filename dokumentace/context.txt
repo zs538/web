@@ -32,6 +32,10 @@ Comments
 
 Each post supports a comment section with optional nested replies
 
+Website will NOT have like or repost feature
+
+--------------------------------------------------------------------------------------------------------------------------------
+
 Profiles
 
 Every user has a public profile route that shows their info and posts
@@ -124,9 +128,7 @@ Add profile images, timestamps, or media fields in the feed display.
 Build on this by connecting other routes (post detail, profile, comment, etc.) to your database.
 )
 
-Only routs are created with empty pages.
-
-Currently, work is focused on connecting other dynamic routes (such as user profile, post creation and viewing, and comments) to the database and building the main interactive user flows and completing tests.
+Currently, work is focused on finishing homepage. Followed by connecting other dynamic routes (such as user profile, post creation and viewing, and comments) to the database and building the main interactive user flows and completing tests.
 
 The next development steps are to implement user profile editing, media uploads, comment submission, admin tools, audit log views, and to improve the user interface and visual styling.
 
