@@ -1,7 +1,15 @@
 cíl:
-naučit se vývoj webové stránky/sveltkit
 úspěšný scrum prjekt
+
+naučit se vývoj webové stránky
+-sveltkit
+-Drizzle ORM + SQLite
+
 responzivní sociální síť
+-UI
+-db
+
+
 
 požadavky webu:
 
