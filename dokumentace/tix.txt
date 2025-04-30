@@ -1,0 +1,5 @@
+setup routs
+https://svelte.dev/tutorial/kit/pages
+
+SQLite DB
+shema.ts
