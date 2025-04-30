@@ -48,7 +48,7 @@
 
 <style>
   .posts-section {
-    max-width: 540px;  /* Tumblr-like width */
+    max-width: 670px;  /* Tumblr-like width */
     margin: 0 auto;    /* Center in page */
     padding: 0 10px;   /* Small side padding for mobile */
   }

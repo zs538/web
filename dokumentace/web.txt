@@ -10,18 +10,63 @@ responzivní sociální síť
 -db
 
 web:
-public global feed - inf scroll
-gallery +video, zoom, custom audio player
+ikam.to
+
+
+public global feed - inf scroll (loaded posts fading in)
+-post section
+  -post:
+	media (optinal) - gallery +video, img zoom, custom audio player
+	text
+	post info
+-nav bar top
+  -logo left > homepage
+  -icon right > login
+	+anim.
+  ? search bar
 
 login page
+-login prompt
+-background anim.
+
 about page
 
-background, pageswitch anim.
+pageswitch anim.
 
-homepage UI
+homepage UI +settings
 -new post (img, video, audio, embed)
 -posts overview +controls
--změna hesla
-? search engine ? comments
+-pswd reset
+? search engine ? comments ? themes
 
 acc on email req
+
+problems to solve:
+
+-authorization (accounts)
+	adding new users to db
+	login system
+	security
+	server hooks route protection
+
+-post creation
+	uploading media
+	new post UI
+		-post formating
+		-drag and drop
+		-media reorder
+	automated db update
+
+-design homepage
+	settings
+		-password reset
+	new post comp
+	user posts overview
+
+-main feed /
+	infinite scroll
+		-loaded posts fading in
+	new post button if logged in
+	remove post option
+
+-custom audio player
