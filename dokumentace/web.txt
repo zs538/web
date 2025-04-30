@@ -9,10 +9,19 @@ responzivní sociální síť
 -UI
 -db
 
+web:
+public global feed - inf scroll
+gallery +video, zoom, custom audio player
 
+login page
+about page
 
-požadavky webu:
+background, pageswitch anim.
 
-global feed
-profile
-login/acc request
+homepage UI
+-new post (img, video, audio, embed)
+-posts overview +controls
+-změna hesla
+? search engine ? comments
+
+acc on email req
