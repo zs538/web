@@ -20,8 +20,8 @@ public global feed - inf scroll (loaded posts fading in)
 	text
 	post info
 -nav bar top
-  -logo left > homepage
-  -icon right > login
+  -logo left > about page
+  -icon right > login > homepage
 	+anim.
   ? search bar
 
@@ -50,23 +50,32 @@ problems to solve:
 	server hooks route protection
 
 -post creation
+	security checks
 	uploading media
+		-filesize
+		-allowed formats
 	new post UI
 		-post formating
 		-drag and drop
 		-media reorder
-	automated db update
+	automated db update on post
 
 -design homepage
 	settings
 		-password reset
-	new post comp
+	new post
 	user posts overview
+		-controls
+			-post deletion
 
 -main feed /
 	infinite scroll
 		-loaded posts fading in
 	new post button if logged in
-	remove post option
+	post moderation options for admin
 
--custom audio player
+-custom video and audio player
+	functions +UI
+		-progress bar
+		-volume
+		-playback controls
