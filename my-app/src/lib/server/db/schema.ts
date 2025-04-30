@@ -5,7 +5,7 @@ import {
   } from 'drizzle-orm/sqlite-core';
 
   import { sql } from 'drizzle-orm';
-
+  import { relations } from 'drizzle-orm';
   
   // --- User Table ---
   export const user = sqliteTable('user', {
@@ -78,3 +78,20 @@ import {
   export type Media = typeof media.$inferSelect;
   export type Comment = typeof comment.$inferSelect;
   export type AuditLog = typeof auditLog.$inferSelect;
+
+  export const postRelations = relations(post, ({ one, many }) => ({
+	author: one(user, {
+	  fields: [post.authorId],
+	  references: [user.id]
+	}),
+	media: many(media)  // Add this line for post->media relation
+  }));
+  
+  // Also add mediaRelations for the reverse relationship:
+  export const mediaRelations = relations(media, ({ one }) => ({
+	post: one(post, {
+	  fields: [media.postId],
+	  references: [post.id]
+	})
+  }));
+  
