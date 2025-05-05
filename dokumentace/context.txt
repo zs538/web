@@ -129,16 +129,18 @@ Infinite scroll (load more on scroll, with fade-in animation)
 
 Each post can display up to 4 media items (image, video, audio, embeds)
 
-Gallery for images, zoom for images, custom audio player, video player, embed handling (YouTube, SoundCloud, etc.)
+Gallery for images and videos when clicked on the image/video, similar to discord image view the clicked image takes the focus, blurred background, arrows to navigate between images/videos.
+(may not include videos if too complicated)
+Zoom for images, custom audio player, video player, embed handling (YouTube, SoundCloud, etc.)
 
-Each post shows media (if any), then the text, then info (timestamp, maybe author name)
+Each post shows media (if any), then the text, then info (timestamp, author name)
 
 Posts fade in as they load
 
 2. Navigation Bar (top of all pages)
-Left: Logo, links to homepage/feed
+Left: Logo, links to about page
 
-Right: Login icon (animated), maybe animated transitions
+Right: Icon, links login page, if already logged in homepage
 
 (Optional) Search bar (future)
 
@@ -155,7 +157,7 @@ Brief about/info, style as desired
 5. Page Transition Animations
 Animated transitions between main pages
 
-6. Homepage/Settings for Logged-In Users (/homepage or /me)
+6. Homepage/Settings for Logged-In Users (/me)
 Show overview of user’s own posts (list, controls for remove)
 
 Create new post (upload image, video, audio, add YouTube/SoundCloud embed, plus text)
@@ -163,6 +165,8 @@ Create new post (upload image, video, audio, add YouTube/SoundCloud embed, plus 
 Password reset option
 
 Other settings as needed
+
+--------------------------------
 
 Non-Functional/Tech Requirements
 Manual user/admin creation — no public registration
@@ -194,9 +198,9 @@ Feed/Main:
 
 Nav Bar:
 
- Logo left, homepage link
+ Logo left, about page
 
- Animated login icon right (login/logout)
+ login icon right login/homepage
 
  Pageswitching animations
 
@@ -212,7 +216,7 @@ About:
 
 User Home/Settings:
 
- /homepage or /me (requires login)
+ /me (requires login)
 
  List of user’s posts with remove controls
 
@@ -272,3 +276,40 @@ No likes or reposts
 
 No public registration
 
+D:\WEB\MY-APP\SRC
+|   app.d.ts
+|   app.html
+|   hooks.server.ts
+|
++---lib
+|   |   index.ts
+|   |
+|   +---components
+|   |       Post.svelte
+|   |       PostsSection.svelte
+|   |
+|   \---server
+|       |   auth.ts
+|       |
+|       \---db
+|               index.ts
+|               schema.ts
+|               seed.ts
+|
+\---routes
+    |   +page.svelte
+    |
+    +---about
+    +---demo
+    |   |   +page.svelte
+    |   |
+    |   \---lucia
+    |       |   +page.server.ts
+    |       |   +page.svelte
+    |       |
+    |       \---login
+    |               +page.server.ts
+    |               +page.svelte
+    |
+    +---login
+    \---me
