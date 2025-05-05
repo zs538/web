@@ -2,121 +2,6 @@ Context:
 
 You are building a prototype social media website inspired by Tumblr, using SvelteKit for the frontend, Drizzle ORM for data modeling, and SQLite (better-sqlite3) as the database. The project's goals are to support multimedia posts and user authentication, all optimized for rapid local development and prototyping. Registration is not open to the public; users and admins are created manually.
 
---------------------------------------------------------------------------------------------------------------------------------
-
-Website Functional Design
-
-User System
-
-Manually created users and admin accounts
-
-Role-based system for moderation and user management
-
---------------------------------------------------------------------------------------------------------------------------------
-
-Posts and Feed
-
-Main public feed listing the latest posts, infinite scroll
-
-Each post can contain up to four media items (image, audio, video, embed like youtube or soundcloud) and accompanying text
-
-Posts are visible on the main feed and every user has an overview of their own posts in their homepage
-
-Users can create and remove their own posts
-
---------------------------------------------------------------------------------------------------------------------------------
-
-Website will NOT have like, comment or repost feature
-
---------------------------------------------------------------------------------------------------------------------------------
-
-Routing
-
-Filesystem-based routing: distinct folders for homepage, login. Main feed as /
-
---------------------------------------------------------------------------------------------------------------------------------
-
-Authentication and Access Control
-
-Lucia is used for secure login and session management
-
-Only authenticated users may create posts
-
-SvelteKit server hooks provide route protection
-
---------------------------------------------------------------------------------------------------------------------------------
-
-Admin and Moderation
-
-Admin role built in for future moderation features
-
-Audit log in schema for tracking actions such as logins, edits, and deletions
-
---------------------------------------------------------------------------------------------------------------------------------
-
-Development Stack and Practices
-
-Drizzle ORM and better-sqlite3 for the backend
-
-TypeScript, ESLint, and Prettier to ensure code quality
-
-Seed script included to insert dummy users and posts for easier development and testing
-
-Extensible structure for adding features such as TailwindCSS later
-
---------------------------------------------------------------------------------------------------------------------------------
-
-Modular Component-Based UI Architecture (Generalized Idea for the Whole Website):
-
-The website will use a modular, component-driven UI design. Each distinct section of a page—such as the posts feed, user profile, comment thread, or media gallery—will be implemented as its own Svelte component. Within these sections, repeated or complex items (like individual posts, a single comment, or a media element) will also be their own reusable sub-components.
-
-Pages will be composed by assembling these building-block components, passing data via props and using slot composition where necessary. For example:
-
-The feed page will use a posts-section component that iterates over post data and renders a post component for each item.
-
-This component-based approach is not just for the homepage, but forms the structural pattern for the entire site. It enables:
-
-Rapid development and easy UI changes (change one component’s style or behavior and all usages are updated).
-
-Consistency, maintainability, and scalability as features and routes expand.
-
-Straightforward testing and reuse of logic and UI.
-
-Summary - The website's UI will be built as a hierarchy of reusable, encapsulated Svelte components—for collections (like lists of posts or comments) and for individual items (like a single post) —and this pattern will be used across all routes and pages for a consistent, maintainable, and scalable application.
-
---------------------------------------------------------------------------------------------------------------------------------
-
-Project Progress (Current Status)
-
-Technology stack is fully set up, including SvelteKit, Drizzle ORM, and SQLite.
-
-Database schema is complete, migrated, and accurately models users, posts, media, comments, sessions, and audit logs.
-
-Seed script has been implemented and has loaded test users and posts into the database.
-
-SvelteKit routes are scaffolded in the filesystem for core pages (feed, profile, post detail, etc.).
-
-Database connection through Drizzle is tested and works.
-
-Lucia authentication is installed but has NOT been tested yet.
-
-Homepage/feed route is NOT fully implemented yet. 
-(
-So far displaying one post from the seed.ts sucessfully
-Next steps you might take:
-Create UI Components
-Display the username instead of just the user ID by joining with user data.
-Add more posts or seed more data to see multiple items in the feed.
-Add profile images, timestamps, or media fields in the feed display.
-Build on this by connecting other routes (post detail, profile, comment, etc.) to your database.
-)
-
-Currently, work is focused on finishing homepage. Followed by connecting other dynamic routes (such as user profile, post creation and viewing, and comments) to the database and building the main interactive user flows and completing tests.
-
-The next development steps are to implement user profile editing, media uploads, comment submission, admin tools, audit log views, and to improve the user interface and visual styling.
-
---------------------------------------------------------------------------------------------------------------------------------
-
 Updated Project Overview
 Purpose:
 A public, Tumblr-inspired feed of multimedia posts with authentication, infinite scrolling, and simple account management. No comments, no profiles, no likes/reposts, no post details. Admin-ready for moderation.
@@ -280,16 +165,20 @@ D:\WEB\MY-APP\SRC
 |   app.d.ts
 |   app.html
 |   hooks.server.ts
-|
+|   
 +---lib
 |   |   index.ts
-|   |
+|   |   
 |   +---components
+|   |       NavBar.svelte
 |   |       Post.svelte
 |   |       PostsSection.svelte
-|   |
+|   |       
 |   \---server
 |       |   auth.ts
+|       |
+|       +---auth
+|       |       lucia.ts
 |       |
 |       \---db
 |               index.ts
@@ -297,9 +186,13 @@ D:\WEB\MY-APP\SRC
 |               seed.ts
 |
 \---routes
+    |   +layout.svelte
+    |   +page.server.ts
     |   +page.svelte
     |
     +---about
+    |       +page.svelte
+    |
     +---demo
     |   |   +page.svelte
     |   |
@@ -312,4 +205,6 @@ D:\WEB\MY-APP\SRC
     |               +page.svelte
     |
     +---login
+    |       +page.svelte
+    |
     \---me

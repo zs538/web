@@ -1,11 +1,22 @@
-// for information about these interfaces
-declare global {
-	namespace App {
-		interface Locals {
-			user: import('$lib/server/auth').SessionValidationResult['user'];
-			session: import('$lib/server/auth').SessionValidationResult['session']
-		}
-	}
+/// <reference types="lucia" />
+
+// Declare the App namespace with Locals interface
+declare namespace App {
+  interface Locals {
+    user: import("lucia").User | null;
+    session: import("lucia").Session | null;
+  }
+  // Add other SvelteKit interfaces as needed
 }
 
-export {};
+// Add Lucia type augmentation
+declare namespace Lucia {
+  type Auth = import("$lib/server/auth/lucia").Auth;
+  
+  interface DatabaseUserAttributes {
+    username: string;
+    role: string;
+    isActive: boolean;
+    createdAt: Date;
+  }
+}

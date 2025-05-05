@@ -64,11 +64,9 @@
 <style>
   .post {
     margin-bottom: 24px;
-    border: 1px solid #eee;
-    border-radius: 8px;
+    border-radius: 0px;
     padding: 12px 16px;
     background: #fff;
-    box-shadow: 0 1px 4px rgba(10,20,40,.04);
   }
 
   .media-container {
@@ -84,7 +82,7 @@
     width: 100%;
     max-height: 400px;
     object-fit: contain;
-    border-radius: 6px;
+    border-radius: 0px;
     background: #f6f6f6;
   }
   .media-item audio {
