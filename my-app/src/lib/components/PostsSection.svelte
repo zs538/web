@@ -1,33 +1,28 @@
 <script lang="ts">
   import PostComponent from './Post.svelte';
-  
+
+  // Updated type: user has only id and username, matches latest schema
   type PostWithRelations = {
-  id: string;
-  text: string | null;
-  authorId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isDeleted: boolean;
-  
-  // Relations
-  author: {
     id: string;
-    username: string;
-    avatarUrl?: string | null; // Allow both undefined and null
-    bio?: string | null;
-    // Add other author fields that might be nullable
+    text: string | null;
+    authorId: string;
+    createdAt: Date | string | number;
+    isDeleted: boolean;
+    author: {
+      id: string;
+      username: string;
+    };
+    media: Array<{
+      id: string;
+      postId: string;
+      type: string; // image, video, audio, embed
+      url: string;
+      caption: string | null;
+      position: number;
+      uploadedAt: Date | string | number;
+    }>;
   };
-  media: Array<{
-    id: string;
-    postId: string;
-    type: string;
-    url: string;
-    caption: string | null;
-    position: number;
-    uploadedAt: Date;
-  }>;
-};
-  
+
   export let posts: PostWithRelations[];
 </script>
 
@@ -44,7 +39,6 @@
     </div>
   {/if}
 </section>
-
 
 <style>
   .posts-section {
