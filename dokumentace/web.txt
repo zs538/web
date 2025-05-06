@@ -12,34 +12,87 @@ responzivní sociální síť
 -db
 
 web:
-ikam.to
+
+layout-
+left col - nav
+right col - pages
+
+public global feed - inf scroll
 
 
-public global feed - inf scroll (loaded posts fading in)
--post section
-  -post:
-	media (optinal) - gallery +video, img zoom, custom audio player
-	text
-	post info
--nav bar top
-  -logo left > about page
-  -icon right > login > homepage
-	+anim.
+-nav li left
+	guest:
+		main
+		login
+		_
+		about
+	user:
+		main
+		my posts
+		create post
+		logout
+		_
+		about
+	admin:
+		main
+		my posts
+		create post
+		audit log
+		user manager
+		logout
+		_
+		about
+
   ? search bar
 
-login page
--login prompt
--background anim.
+-main
+	post section vertical
+	post components infinite scroll, loaded posts fade in
+	-post:
+		media (optinal) - gallery +video, img zoom, custom audio player
+		text
+		post info
+		admin tools - pin post to the top of the feed, remove post
 
-about page
+-my posts
+	see -main
+	only users posts shown
+	+ remove post option
+	no edit option, pin post admin only
 
-pageswitch anim.
+-create post
+	can add up to 4 media
+		media - image, video, audio, embed (youtube, soundcloud, etc.)
+	text box
+	submit button
+		redirect to main
 
-homepage UI +settings
--new post (img, video, audio, embed)
--posts overview +controls
--pswd reset
-? search engine ? comments ? themes
+-login page
+	
+Username:____________
+
+Password:____________
+			[login]
+
+-logout
+confirmation on click:
+logout > logout: confirm
+"logout" toggle "confirm" display
+logout on "confirm"
+
+-about page
+Paragraph + images
+
+-audit log
+shows list of logs
+highlights admin login log
+
+-user manager
+shows list of users
+amdin tools:
+	change user parameters (username, password)
+	remove user option
+	expand user info - last login, creation time, number of posts, etc.
 
 acc on email req
 
