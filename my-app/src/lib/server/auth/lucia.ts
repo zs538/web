@@ -1,4 +1,5 @@
-import { Lucia } from "lucia";
+// src/lib/server/auth/lucia.ts
+import { Lucia } from "./lucia-types";
 import { BetterSqlite3Adapter } from "@lucia-auth/adapter-sqlite";
 import { sqlite } from "$lib/server/db";
 
@@ -9,11 +10,13 @@ export const auth = new Lucia(
   }),
   {
     sessionCookie: { expires: false },
-    getUserAttributes: (attributes) => ({
+    getUserAttributes: (attributes: any) => ({
       username: attributes.username,
       role: attributes.role,
-      isActive: attributes.isActive,
+      isActive: attributes.isActive, 
       createdAt: attributes.createdAt
     })
   }
 );
+
+export type Auth = typeof auth;
