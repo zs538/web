@@ -1,104 +1,108 @@
 <script lang="ts">
-    // You’ll wire up real auth later; for now just placeholders.
-    let username = '';
-    let password = '';
-    let error: string | null = null;
-  
-    function handleSubmit(e: Event) {
-      e.preventDefault();
-      // This will be replaced with a call to your server/login endpoint.
-      if (!username || !password) {
-        error = "Please enter both username and password.";
-        return;
-      }
-      // Simulate login (for now)
-      alert(`Logging in as: ${username}`);
+  import { enhance } from '$app/forms';
+  import { browser } from '$app/environment';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { onMount } from 'svelte';
+
+  export let form;
+
+  function redirectIfLoggedIn() {
+    if (browser && $page.data.user) {
+      goto('/me', { replaceState: true });
     }
-  </script>
-  
-  <section class="login-container">
-    <h1>Sign in</h1>
-    <form class="login-form" on:submit|preventDefault={handleSubmit}>
-      <label>
-        Username
-        <input type="text" bind:value={username} autocomplete="username" required>
-      </label>
-      <label>
-        Password
-        <input type="password" bind:value={password} autocomplete="current-password" required>
-      </label>
-      {#if error}
-        <div class="login-error">{error}</div>
-      {/if}
-      <button type="submit">Log in</button>
-    </form>
-  </section>
-  
-  <style>
-    .login-container {
-      max-width: 360px;
-      margin: 50px auto 0 auto;
-      padding: 2rem 2.2rem 2rem 2.2rem;
-      background: #fff;
-      border-radius: 11px;
-      box-shadow: 0 2px 22px 0 #23294010;
-      text-align: center;
-    }
-    .login-container h1 {
-      margin-bottom: 1.2em;
-      font-size: 1.7rem;
-      color: #222;
-    }
-    .login-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1.2em;
-    }
-    .login-form label {
-      text-align: left;
-      font-size: 1em;
-      color: #213250e6;
-      display: block;
-    }
-    .login-form input {
-      width: 100%;
-      margin-top: 0.2em;
-      font-size: 1em;
-      padding: 0.65em 0.8em;
-      border-radius: 7px;
-      border: 1.5px solid #e0e6ed;
-      background: #fafbfc;
-      transition: border-color 0.14s;
-    }
-    .login-form input:focus {
-      border-color: #61dafb;
-      outline: none;
-      background: #fff;
-    }
-    .login-error {
-      background: #fde7ea;
-      color: #a52;
-      border-radius: 5px;
-      padding: 7px 0;
-      margin-bottom: -8px;
-      font-size: 1em;
-      text-align: center;
-    }
-    .login-form button {
-      margin-top: 0.3em;
-      font-size: 1em;
-      padding: 0.68em 2.2em;
-      border-radius: 8px;
-      border: none;
-      background: #61dafb;
-      color: #213250;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.16s, color 0.12s;
-    }
-    .login-form button:hover,
-    .login-form button:focus {
-      background: #213250;
-      color: #fff;
-    }
-  </style>
+  }
+
+  onMount(() => {
+    redirectIfLoggedIn();
+
+    // Also check when the tab or page becomes visible (handles bfcache/back button)
+    const handler = () => redirectIfLoggedIn();
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  });
+</script>
+
+<div class="login-container">
+  <h1>Log In</h1>
+
+  <form method="POST" use:enhance>
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input 
+        type="text" 
+        id="username" 
+        name="username" 
+        required
+        minlength="1"
+      >
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        required
+        minlength="1"
+      >
+    </div>
+
+    {#if form?.message}
+      <div class="error-message">{form.message}</div>
+    {/if}
+
+    <button type="submit">Log In</button>
+  </form>
+</div>
+
+<style>
+  .login-container {
+    max-width: 400px;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+
+  button {
+    width: 100%;
+    padding: 0.75rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #2563eb;
+  }
+
+  .error-message {
+    color: #ef4444;
+    margin: 1rem 0;
+    text-align: center;
+  }
+</style>

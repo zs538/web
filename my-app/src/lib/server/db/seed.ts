@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import { db } from './index';
 import { user, post, media } from './schema';
+import { Argon2id } from "oslo/password";
+
 
 // Posts with hard-coded, readable timestamps (UTC)
 const POSTS = [
@@ -113,32 +115,39 @@ async function seed() {
 
   console.log('Deleted existing data.');
 
-  // 2. Insert users (batch)
+  // 2. Create password hashes properly using Argon2id
+  const hasher = new Argon2id();
+  const alicePasswordHash = await hasher.hash('alicepassword'); // Set a real password here
+  const adminPasswordHash = await hasher.hash('password123'); // Set a real admin password here
+
+  // 3. Insert users (batch) with proper password hashes
   await db.insert(user).values([
     {
       id: 'u1',
       username: 'alice',
-      passwordHash: 'somehashedpassword',
+      passwordHash: alicePasswordHash,
       role: 'user',
       isActive: true,
+      createdAt: new Date()
     },
     {
       id: 'u2',
       username: 'bob',
-      passwordHash: 'otherhashedpassword',
+      passwordHash: adminPasswordHash,
       role: 'admin',
       isActive: true,
+      createdAt: new Date()
     }
   ]);
 
   console.log('Created test users.');
 
-  // 3. Insert posts (batch, all fields correct, createdAt as Date)
+  // 4. Insert posts (batch, all fields correct, createdAt as Date)
   await db.insert(post).values(POSTS);
 
   console.log('Created test posts.');
 
-  // 4. Insert media (batch)
+  // 5. Insert media (batch)
   await db.insert(media).values(MEDIA);
 
   console.log('Created test media attachments.');
