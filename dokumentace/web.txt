@@ -24,14 +24,14 @@ public global feed - inf scroll
 	guest:
 		main
 		login
-		_
+		
 		about
 	user:
 		main
 		my posts
 		create post
 		logout
-		_
+		
 		about
 	admin:
 		main
@@ -40,7 +40,7 @@ public global feed - inf scroll
 		audit log
 		user manager
 		logout
-		_
+		
 		about
 
   ? search bar
@@ -56,6 +56,7 @@ public global feed - inf scroll
 
 -my posts
 	see -main
+		users posts are shown the same way as the posts in the main feed, with additional option to remove the post - no edit
 	only users posts shown
 	+ remove post option
 	no edit option, pin post admin only
@@ -68,45 +69,43 @@ public global feed - inf scroll
 		redirect to main
 
 -login page
-	
-Username:____________
-
-Password:____________
-			[login]
+	simple 
+	username input
+	password input
 
 -logout
-confirmation on click:
-logout > logout: confirm
-"logout" toggle "confirm" display
-logout on "confirm"
+	confirmation on click:
+		"logout" toggles "confirm" display
+		logout on "confirm"
+		logout > logout: confirm
 
 -about page
-Paragraph + images
+	Paragraph + images
 
 -audit log
-shows list of logs
-highlights admin login log
+	shows list of logs
+	highlights admin login logs
+	logs:
+		user creation
+		user deletion
+		user login
+		user password change
+		post creation
+		post deletion
+		post pin
+		- add aditional later
 
 -user manager
-shows list of users
-amdin tools:
-	change user parameters (username, password)
-	remove user option
-	expand user info - last login, creation time, number of posts, etc.
+	includes create user component
+	shows list of users
+	amdin tools:
+		change user parameters (username, password)
+		remove user option
+		expand user info - last login, creation time, number of posts, etc.
 
 acc on email req
 
-admin post tools
--remove post
--pin post to the top of the feed
-
 problems to solve:
-
--authorization (accounts)
-	adding new users to db
-	login system
-	security
-	server hooks route protection
 
 -post creation
 	security checks
@@ -118,20 +117,6 @@ problems to solve:
 		-drag and drop
 		-media reorder
 	automated db update on post
-
--design homepage
-	settings
-		-password reset
-	new post
-	user posts overview
-		-controls
-			-post deletion
-
--main feed /
-	infinite scroll
-		-loaded posts fading in
-	new post button if logged in
-	post moderation options for admin
 
 -custom video and audio player
 	functions +UI

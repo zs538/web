@@ -170,17 +170,20 @@ D:\WEB\MY-APP\SRC
 |   |   index.ts
 |   |   
 |   +---components
-|   |       NavBar.svelte
-|   |       Post.svelte
+|   |       NavBar.svelte      
+|   |       Post.svelte        
 |   |       PostsSection.svelte
 |   |       
 |   \---server
 |       |   auth.ts
-|       |
+|       |   
 |       +---auth
-|       |       lucia.ts
+|       |       lucia-types.ts 
+|       |       lucia.ts       
+|       |       protect.ts
 |       |
 |       \---db
+|               create-admin.ts
 |               index.ts
 |               schema.ts
 |               seed.ts
@@ -192,6 +195,11 @@ D:\WEB\MY-APP\SRC
     |
     +---about
     |       +page.svelte
+    |
+    +---admin
+    |   \---create-user
+    |           +page.server.ts
+    |           +page.svelte
     |
     +---demo
     |   |   +page.svelte
@@ -205,6 +213,15 @@ D:\WEB\MY-APP\SRC
     |               +page.svelte
     |
     +---login
+    |       +page.server.ts
     |       +page.svelte
     |
+    +---logout
+    |       +server.ts
+    |
     \---me
+            +page.server.ts
+            +page.svelte
+
+
+progress: db seeded with users and posts - connected to the site, lucia fully set - funcional login system, admin can create new user, posts show on the main page, only seeded posts - Post creation isnt done yet. Main feed /about /login and /me are done. 
