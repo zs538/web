@@ -21,6 +21,10 @@ public global feed - inf scroll
 
 
 -nav li left
+	logo above the links
+	link side bar indicator
+		-following mouse +smoothing
+		-only visible when links are hovered - fading in and out
 	guest:
 		main
 		login
