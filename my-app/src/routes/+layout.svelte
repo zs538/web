@@ -52,7 +52,6 @@
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
-    /* Allows left nav + 400px content centered on wide screens */
   }
   .nav {
     min-width: 120px;
