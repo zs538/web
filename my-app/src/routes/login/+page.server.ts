@@ -4,14 +4,11 @@ import type { Actions, PageServerLoad } from './$types';
 import { Argon2id } from 'oslo/password';
 import { db } from '$lib/server/db';
 
-// Add this load function to redirect logged-in users
+// Redirect to main feed if already logged in
 export const load: PageServerLoad = async ({ locals }) => {
-  // If user is already logged in, redirect to /me
   if (locals.user) {
-    throw redirect(302, '/me');
+    throw redirect(302, '/');
   }
-  
-  // Otherwise, continue to the login page
   return {};
 };
 
@@ -23,14 +20,10 @@ export const actions: Actions = {
 
     // Validate input
     if (typeof username !== 'string' || username.length < 1) {
-      return fail(400, { 
-        message: 'Username must be at least 1 character' 
-      });
+      return fail(400, { message: 'Username must be at least 1 character' });
     }
     if (typeof password !== 'string' || password.length < 1) {
-      return fail(400, { 
-        message: 'Password must be at least 1 character' 
-      });
+      return fail(400, { message: 'Password must be at least 1 character' });
     }
 
     // Find user
@@ -39,35 +32,32 @@ export const actions: Actions = {
     });
 
     if (!existingUser) {
-      return fail(400, { 
-        message: 'Invalid credentials' 
-      });
+      return fail(400, { message: 'Invalid credentials' });
     }
 
     // Verify password
     const validPassword = await new Argon2id().verify(
-      existingUser.passwordHash, 
+      existingUser.passwordHash,
       password
     );
     if (!validPassword) {
-      return fail(400, { 
-        message: 'Invalid credentials' 
-      });
+      return fail(400, { message: 'Invalid credentials' });
     }
 
     // Create session
     const session = await auth.createSession(existingUser.id, {});
     const sessionCookie = auth.createSessionCookie(session.id);
-    
+
     cookies.set(
-      sessionCookie.name, 
-      sessionCookie.value, 
+      sessionCookie.name,
+      sessionCookie.value,
       {
         path: '/',
         ...sessionCookie.attributes
       }
     );
 
-    throw redirect(303, '/me');
+    // Redirect to main feed after login
+    throw redirect(303, '/');
   }
 };
