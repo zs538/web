@@ -17,6 +17,81 @@
   function formatDate(ts: Date | string | number) {
     return new Date(ts).toLocaleString();
   }
+
+  import { onMount } from 'svelte';
+
+  // Handle media aspect ratios after component mounts
+  onMount(() => {
+    // Process images
+    const images = document.querySelectorAll('.post img') as NodeListOf<HTMLImageElement>;
+    images.forEach(img => {
+      if (img.complete) {
+        checkImageAspectRatio(img);
+      } else {
+        img.onload = () => checkImageAspectRatio(img);
+      }
+    });
+
+    // Process videos
+    const videos = document.querySelectorAll('.post video') as NodeListOf<HTMLVideoElement>;
+    videos.forEach(video => {
+      if (video.readyState >= 1) {
+        checkVideoAspectRatio(video);
+      } else {
+        video.onloadedmetadata = () => checkVideoAspectRatio(video);
+      }
+    });
+  });
+
+  // Check image aspect ratio and apply appropriate class
+  function checkImageAspectRatio(img: HTMLImageElement) {
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    const mediaItem = img.closest('.media-item');
+    if (!mediaItem) return;
+
+    // Clear any existing classes
+    mediaItem.classList.remove('wide-media', 'tall-media', 'square-media', 'very-tall-media');
+
+    // Apply appropriate class based on aspect ratio
+    if (aspectRatio > 1.5) {
+      // Wide image (landscape)
+      mediaItem.classList.add('wide-media');
+    } else if (aspectRatio < 0.33) {
+      // Very tall image (greater than 1:3 ratio)
+      mediaItem.classList.add('very-tall-media');
+    } else if (aspectRatio < 0.67) {
+      // Tall image (portrait)
+      mediaItem.classList.add('tall-media');
+    } else {
+      // Roughly square image
+      mediaItem.classList.add('square-media');
+    }
+  }
+
+  // Check video aspect ratio and apply appropriate class
+  function checkVideoAspectRatio(video: HTMLVideoElement) {
+    const aspectRatio = video.videoWidth / video.videoHeight;
+    const mediaItem = video.closest('.media-item');
+    if (!mediaItem) return;
+
+    // Clear any existing classes
+    mediaItem.classList.remove('wide-media', 'tall-media', 'square-media', 'very-tall-media');
+
+    // Apply appropriate class based on aspect ratio
+    if (aspectRatio > 1.5) {
+      // Wide video (landscape)
+      mediaItem.classList.add('wide-media');
+    } else if (aspectRatio < 0.33) {
+      // Very tall video (greater than 1:3 ratio)
+      mediaItem.classList.add('very-tall-media');
+    } else if (aspectRatio < 0.67) {
+      // Tall video (portrait)
+      mediaItem.classList.add('tall-media');
+    } else {
+      // Roughly square video
+      mediaItem.classList.add('square-media');
+    }
+  }
 </script>
 
 <article class="post">
@@ -26,9 +101,15 @@
       {#each post.media as media}
         <div class="media-item">
           {#if media.type === 'image'}
-            <img src={media.url} alt={media.caption || 'Image'} />
+            <img
+              src={media.url}
+              alt={media.caption || 'Image'}
+            />
           {:else if media.type === 'video'}
-            <video controls src={media.url}>
+            <video
+              controls
+              src={media.url}
+            >
               <track kind="captions" label="Captions" />
             </video>
           {:else if media.type === 'audio'}
@@ -81,17 +162,55 @@
     overflow: hidden;
     transform: translateZ(0); /* Helps with rendering the shadow */
     margin: 4px 0;
+    width: 100%;
+    background: #f6f6f6;
   }
 
   .media-item img,
-  .media-item video,
-  .media-item iframe {
+  .media-item video {
     width: 100%;
-    max-height: 400px;
-    object-fit: contain;
+    /* No default max-height to allow images to fill width */
+    object-fit: contain; /* Default to contain to prevent cropping */
     border-radius: 0px;
     background: #f6f6f6;
     display: block; /* Removes any bottom spacing */
+  }
+
+  /* Wide media (landscape) */
+  :global(.media-item.wide-media) img,
+  :global(.media-item.wide-media) video {
+    object-fit: cover;
+    width: 100%;
+  }
+
+  /* Square-ish media */
+  :global(.media-item.square-media) img,
+  :global(.media-item.square-media) video {
+    object-fit: contain;
+    width: 100%;
+  }
+
+  /* Tall media (portrait) */
+  :global(.media-item.tall-media) img,
+  :global(.media-item.tall-media) video {
+    object-fit: contain;
+    width: 100%;
+  }
+
+  /* Very tall media (greater than 1:3 ratio) */
+  :global(.media-item.very-tall-media) img,
+  :global(.media-item.very-tall-media) video {
+    object-fit: contain;
+    max-height: 800px;
+    width: 100%;
+  }
+
+  .media-item iframe {
+    width: 100%;
+    min-height: 320px;
+    border-radius: 0px;
+    background: #f6f6f6;
+    display: block;
   }
   .media-item audio {
     width: 100%;
