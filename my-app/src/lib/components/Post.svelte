@@ -49,15 +49,14 @@
 
   <!-- Post Text -->
   {#if post.text}
-    <div class="post-text">
+    <div class="post-text suisse-font">
       {post.text}
     </div>
   {/if}
 
   <!-- Author and Timestamp -->
   <div class="post-signature">
-    —{post.author?.username}
-    <span class="timestamp">• {formatDate(post.createdAt)}</span>
+    —{post.author?.username} <span class="separator">|</span> <span class="timestamp">{formatDate(post.createdAt)}</span>
   </div>
 </article>
 
@@ -76,6 +75,14 @@
     margin-bottom: 10px;
   }
 
+  .media-item {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 0px;
+    overflow: hidden;
+    transform: translateZ(0); /* Helps with rendering the shadow */
+    margin: 4px 0;
+  }
+
   .media-item img,
   .media-item video,
   .media-item iframe {
@@ -84,9 +91,11 @@
     object-fit: contain;
     border-radius: 0px;
     background: #f6f6f6;
+    display: block; /* Removes any bottom spacing */
   }
   .media-item audio {
     width: 100%;
+    display: block;
   }
 
   .post-text {
@@ -102,9 +111,14 @@
     font-style: italic;
     margin-top: 6px;
   }
+  .post-signature .separator {
+    margin: 0 6px;
+    color: #ccc;
+    font-style: normal;
+  }
+
   .post-signature .timestamp {
-    margin-left: 8px;
-    font-size: 0.9em;
+    font-size: 0.8em;
     color: #bbb;
     font-style: normal;
   }
