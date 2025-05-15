@@ -3,6 +3,7 @@
   import { slide } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import { quintOut } from 'svelte/easing';
+  import { navigate } from '$lib/utils/navigation';
   import { onMount } from 'svelte';
 
   // Define media item types for TypeScript
@@ -437,12 +438,17 @@
     use:enhance={() => {
       isSubmitting = true;
       return async ({ result, update }) => {
-        isSubmitting = false;
+        // Keep isSubmitting true until we're ready to navigate
         await update();
 
         // If the post was created successfully, redirect to home page
         if (result.type === 'success' && result.data?.success) {
-          window.location.href = '/';
+          // Use navigate function for smoother transition
+          // We'll keep the button in "Posting..." state until navigation completes
+          await navigate('/');
+        } else {
+          // Only reset isSubmitting if there was an error
+          isSubmitting = false;
         }
       };
     }}
@@ -839,12 +845,15 @@
   }
 
   .submit-btn {
-    padding: 0.75rem 2rem;
+    padding: 0.75rem 0; /* Remove horizontal padding since we're using fixed width */
     background: #333;
     color: white;
     border: none;
     cursor: pointer;
     font-family: inherit;
+    width: 110px; /* Reduced fixed width */
+    text-align: center; /* Ensure text is centered */
+    transition: background-color 0.15s ease; /* Smooth transition for hover state */
   }
 
   .submit-btn:hover {

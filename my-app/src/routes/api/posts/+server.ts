@@ -1,24 +1,14 @@
-import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
-import { protectRoute } from '$lib/server/auth/protect';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { post, media, user } from '$lib/server/db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 
-// Protect this route - only logged in users can access
-export const load: PageServerLoad = async (event) => {
-  // Ensure user is logged in
-  protectRoute(event);
-
-  const { locals } = event;
-  const userId = locals.user?.id;
-
-  if (!userId) {
-    throw redirect(302, '/login');
-  }
-
-  // Initial batch size - just enough for fast loading
-  const initialLimit = 2;
+export const GET: RequestHandler = async ({ url }) => {
+  // Get pagination parameters from URL
+  const page = parseInt(url.searchParams.get('page') || '1');
+  const limit = parseInt(url.searchParams.get('limit') || '5');
+  const offset = (page - 1) * limit;
 
   try {
     // First, fetch just the post IDs and basic info without media
@@ -31,20 +21,16 @@ export const load: PageServerLoad = async (event) => {
     })
     .from(post)
     .innerJoin(user, eq(post.authorId, user.id))
-    .where(
-      and(
-        eq(post.authorId, userId),
-        eq(post.isDeleted, false)
-      )
-    )
+    .where(eq(post.isDeleted, false))
     .orderBy(desc(post.createdAt))
-    .limit(initialLimit + 1); // Fetch one extra to check if there are more
+    .offset(offset)
+    .limit(limit + 1); // Fetch one extra to check if there are more
 
     // Check if there are more posts
-    const hasMore = postBasics.length > initialLimit;
+    const hasMore = postBasics.length > limit;
 
     // Remove the extra post if we fetched more than our limit
-    const postsToUse = hasMore ? postBasics.slice(0, initialLimit) : postBasics;
+    const postsToUse = hasMore ? postBasics.slice(0, limit) : postBasics;
 
     // If we have posts, fetch their media separately
     const postsWithMedia = [];
@@ -70,24 +56,15 @@ export const load: PageServerLoad = async (event) => {
       });
     }
 
-    return {
+    return json({
       posts: postsWithMedia,
-      user: locals.user,
-      pagination: {
-        initialLimit,
-        hasMore
-      }
-    };
-  } catch (error) {
-    console.error('Error loading user posts:', error);
-    // Return empty data to prevent 500 error
-    return {
+      hasMore
+    });
+  } catch (err) {
+    console.error('Error fetching posts from API:', err);
+    return json({
       posts: [],
-      user: locals.user,
-      pagination: {
-        initialLimit,
-        hasMore: false
-      }
-    };
+      hasMore: false
+    });
   }
 };

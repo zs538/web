@@ -22,76 +22,112 @@
 
   // Handle media aspect ratios after component mounts
   onMount(() => {
-    // Process images
-    const images = document.querySelectorAll('.post img') as NodeListOf<HTMLImageElement>;
-    images.forEach(img => {
-      if (img.complete) {
-        checkImageAspectRatio(img);
-      } else {
-        img.onload = () => checkImageAspectRatio(img);
-      }
-    });
+    // Use IntersectionObserver to lazy load and process images
+    const imageObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target as HTMLImageElement;
+          // Set the actual src only when the image is in view
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            img.onload = () => checkImageAspectRatio(img);
+            imageObserver.unobserve(img);
+          }
+        }
+      });
+    }, { rootMargin: '200px' }); // Load images when they're within 200px of the viewport
 
-    // Process videos
-    const videos = document.querySelectorAll('.post video') as NodeListOf<HTMLVideoElement>;
-    videos.forEach(video => {
-      if (video.readyState >= 1) {
-        checkVideoAspectRatio(video);
-      } else {
-        video.onloadedmetadata = () => checkVideoAspectRatio(video);
-      }
-    });
+    // Use IntersectionObserver to lazy load videos
+    const videoObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const video = entry.target as HTMLVideoElement;
+          if (!video.dataset.src) return;
+
+          // Set preload to metadata to get dimensions first
+          video.preload = 'metadata';
+          video.src = video.dataset.src;
+
+          // When metadata is loaded, set the container size
+          video.onloadedmetadata = () => {
+            const mediaItem = video.closest('.media-item');
+            if (mediaItem) {
+              // Apply aspect ratio class based on video dimensions
+              const aspectRatio = video.videoWidth / video.videoHeight;
+              applyAspectRatioClass(mediaItem, aspectRatio);
+
+              // Set fixed height based on aspect ratio to prevent layout shifts
+              const containerWidth = mediaItem.clientWidth;
+              const calculatedHeight = containerWidth / aspectRatio;
+              (mediaItem as HTMLElement).style.height = `${calculatedHeight}px`;
+
+              // Create a simple resize handler
+              const resizeHandler = () => {
+                const newWidth = (mediaItem as HTMLElement).clientWidth;
+                const newHeight = newWidth / aspectRatio;
+                (mediaItem as HTMLElement).style.height = `${newHeight}px`;
+              };
+
+              // Add resize listener
+              window.addEventListener('resize', resizeHandler);
+
+              // Clean up when video is removed
+              video.addEventListener('emptied', () => {
+                window.removeEventListener('resize', resizeHandler);
+              });
+            }
+
+            videoObserver.unobserve(video);
+          };
+        }
+      });
+    }, { rootMargin: '200px' }); // Load videos when they're within 200px of the viewport
+
+    // Observe all images
+    const images = document.querySelectorAll('.post img[data-src]') as NodeListOf<HTMLImageElement>;
+    images.forEach(img => imageObserver.observe(img));
+
+    // Observe all videos
+    const videos = document.querySelectorAll('.post video[data-src]') as NodeListOf<HTMLVideoElement>;
+    videos.forEach(video => videoObserver.observe(video));
+
+    return () => {
+      // Clean up observers when component is destroyed
+      imageObserver.disconnect();
+      videoObserver.disconnect();
+    };
   });
+
+  // Helper function to apply aspect ratio classes to any media element
+  function applyAspectRatioClass(element: Element, aspectRatio: number) {
+    // Clear any existing classes
+    element.classList.remove('wide-media', 'tall-media', 'square-media', 'very-tall-media');
+
+    // Apply appropriate class based on aspect ratio
+    if (aspectRatio > 1.5) {
+      // Wide media (landscape)
+      element.classList.add('wide-media');
+    } else if (aspectRatio < 0.33) {
+      // Very tall media (greater than 1:3 ratio)
+      element.classList.add('very-tall-media');
+    } else if (aspectRatio < 0.67) {
+      // Tall media (portrait)
+      element.classList.add('tall-media');
+    } else {
+      // Roughly square media
+      element.classList.add('square-media');
+    }
+  }
 
   // Check image aspect ratio and apply appropriate class
   function checkImageAspectRatio(img: HTMLImageElement) {
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     const mediaItem = img.closest('.media-item');
     if (!mediaItem) return;
-
-    // Clear any existing classes
-    mediaItem.classList.remove('wide-media', 'tall-media', 'square-media', 'very-tall-media');
-
-    // Apply appropriate class based on aspect ratio
-    if (aspectRatio > 1.5) {
-      // Wide image (landscape)
-      mediaItem.classList.add('wide-media');
-    } else if (aspectRatio < 0.33) {
-      // Very tall image (greater than 1:3 ratio)
-      mediaItem.classList.add('very-tall-media');
-    } else if (aspectRatio < 0.67) {
-      // Tall image (portrait)
-      mediaItem.classList.add('tall-media');
-    } else {
-      // Roughly square image
-      mediaItem.classList.add('square-media');
-    }
+    applyAspectRatioClass(mediaItem, aspectRatio);
   }
 
-  // Check video aspect ratio and apply appropriate class
-  function checkVideoAspectRatio(video: HTMLVideoElement) {
-    const aspectRatio = video.videoWidth / video.videoHeight;
-    const mediaItem = video.closest('.media-item');
-    if (!mediaItem) return;
 
-    // Clear any existing classes
-    mediaItem.classList.remove('wide-media', 'tall-media', 'square-media', 'very-tall-media');
-
-    // Apply appropriate class based on aspect ratio
-    if (aspectRatio > 1.5) {
-      // Wide video (landscape)
-      mediaItem.classList.add('wide-media');
-    } else if (aspectRatio < 0.33) {
-      // Very tall video (greater than 1:3 ratio)
-      mediaItem.classList.add('very-tall-media');
-    } else if (aspectRatio < 0.67) {
-      // Tall video (portrait)
-      mediaItem.classList.add('tall-media');
-    } else {
-      // Roughly square video
-      mediaItem.classList.add('square-media');
-    }
-  }
 </script>
 
 <article class="post">
@@ -102,13 +138,17 @@
         <div class="media-item">
           {#if media.type === 'image'}
             <img
-              src={media.url}
+              data-src={media.url}
               alt={media.caption || 'Image'}
+              loading="lazy"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"
             />
           {:else if media.type === 'video'}
             <video
               controls
-              src={media.url}
+              data-src={media.url}
+              preload="none"
+              class="video-element"
             >
               <track kind="captions" label="Captions" />
             </video>
@@ -147,6 +187,17 @@
     border-radius: 0px;
     padding: 12px 16px;
     background: #fff;
+    position: relative;
+  }
+
+  .post::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: #eaeaea;
   }
 
   .media-container {
@@ -174,6 +225,13 @@
     border-radius: 0px;
     background: #f6f6f6;
     display: block; /* Removes any bottom spacing */
+  }
+
+  /* Video styling - simple and clean */
+  .media-item video.video-element {
+    object-fit: contain;
+    width: 100%;
+    display: block;
   }
 
   /* Wide media (landscape) */
