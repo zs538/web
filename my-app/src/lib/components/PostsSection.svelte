@@ -52,6 +52,7 @@
   // Props
   export let apiEndpoint: string = '/api/posts'; // Default endpoint for main page
   export let initialPosts: Post[] = []; // Initial posts from server (optional)
+  export let currentUser: { id: string; role: string } | null = null; // Current user for authorization
 
   // Local state
   let scrollContainer: HTMLElement;
@@ -73,6 +74,21 @@
 
     // Bind scroll container
     scrollContainer = document.documentElement;
+
+    // Add event listener for post deletion
+    const handlePostDeleted = (event: CustomEvent) => {
+      const { postId } = event.detail;
+      // Remove the deleted post from the list
+      posts = posts.filter(post => post.id !== postId);
+    };
+
+    // Add event listener as a custom event
+    document.addEventListener('postDeleted', handlePostDeleted as EventListener);
+
+    // Clean up event listener on component destroy
+    return () => {
+      document.removeEventListener('postDeleted', handlePostDeleted as EventListener);
+    };
   });
 
   // Load initial posts
@@ -152,7 +168,7 @@
           class:fade-in={newlyLoadedPostIds.includes(post.id)}
           style="animation-delay: {(index % 5) * 100}ms"
         >
-          <PostComponent {post} />
+          <PostComponent {post} {currentUser} />
         </div>
       {/each}
 

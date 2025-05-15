@@ -1,6 +1,9 @@
 <script lang="ts">
   export let data;
   import PostsSection from '$lib/components/PostsSection.svelte';
+
+  // Current user is already available in data from the server
+  const currentUser = data.user;
 </script>
 
 <main>
@@ -15,6 +18,7 @@
   <PostsSection
     apiEndpoint="/api/myposts"
     initialPosts={data.posts}
+    {currentUser}
   />
 </main>
 

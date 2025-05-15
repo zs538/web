@@ -13,6 +13,57 @@
     }>;
   };
 
+  // Current user data for authorization
+  export let currentUser: { id: string; role: string } | null = null;
+
+  // Delete confirmation state
+  let showDeleteConfirm = false;
+
+  // Check if user can delete this post
+  $: canDelete = currentUser && (
+    // Admin can delete any post
+    currentUser.role === 'admin' ||
+    // Regular user can only delete their own posts
+    currentUser.id === post.author.id
+  );
+
+  // Toggle delete confirmation dialog
+  function toggleDeleteConfirm() {
+    showDeleteConfirm = !showDeleteConfirm;
+  }
+
+  // Delete the post
+  async function deletePost() {
+    if (!canDelete) return;
+
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Dispatch a custom event to notify parent component
+        const event = new CustomEvent('postDeleted', {
+          detail: { postId: post.id },
+          bubbles: true
+        });
+        document.dispatchEvent(event);
+      } else {
+        const errorData = await response.json();
+        console.error('Error deleting post:', errorData);
+        alert('Failed to delete post: ' + (errorData.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Failed to delete post. Please try again.');
+    } finally {
+      showDeleteConfirm = false;
+    }
+  }
+
   // Utility for readable timestamp
   function formatDate(ts: Date | string | number) {
     return new Date(ts).toLocaleString();
@@ -178,6 +229,22 @@
   <!-- Author and Timestamp -->
   <div class="post-signature">
     —{post.author?.username} <span class="separator">|</span> <span class="timestamp">{formatDate(post.createdAt)}</span>
+
+    <!-- Delete button - only shown if user can delete this post -->
+    {#if canDelete}
+      <div class="delete-container">
+        {#if !showDeleteConfirm}
+          <button class="delete-button" on:click={toggleDeleteConfirm} aria-label="Delete post">
+            ×
+          </button>
+        {:else}
+          <div class="delete-confirm">
+            <button class="cancel-button" on:click={toggleDeleteConfirm}>Cancel</button>
+            <button class="confirm-button" on:click={deletePost}>Delete</button>
+          </div>
+        {/if}
+      </div>
+    {/if}
   </div>
 </article>
 
@@ -298,5 +365,50 @@
     font-size: 0.8em;
     color: #bbb;
     font-style: normal;
+  }
+
+  /* Delete button styling */
+  .delete-container {
+    display: inline-block;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  .delete-button {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+
+  .delete-button:hover {
+    color: #ff3b30;
+  }
+
+  .delete-confirm {
+    display: inline-flex;
+    gap: 8px;
+  }
+
+  .cancel-button, .confirm-button {
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .cancel-button {
+    background-color: #f1f1f1;
+    color: #666;
+  }
+
+  .confirm-button {
+    background-color: #ff3b30;
+    color: white;
   }
 </style>
