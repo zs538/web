@@ -1,14 +1,14 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { post, media, user, auditLog } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { post, media, auditLog } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 // DELETE endpoint for post deletion
 export const DELETE: RequestHandler = async ({ params, locals }) => {
   const postId = params.id;
-  
+
   // Check if user is logged in
   if (!locals.user) {
     throw error(401, 'Unauthorized - You must be logged in to delete posts');
@@ -38,35 +38,39 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
       throw error(403, 'Forbidden - You do not have permission to delete this post');
     }
 
-    // Soft delete the post by setting isDeleted to true
-    await db.update(post)
-      .set({ isDeleted: true })
+    // First, delete all media associated with this post
+    await db.delete(media)
+      .where(eq(media.postId, postId));
+
+    // Then, delete the post itself
+    await db.delete(post)
       .where(eq(post.id, postId));
 
-    // Log the deletion in audit log
+    // Log the permanent deletion in audit log
     await db.insert(auditLog).values({
       id: nanoid(),
       userId: locals.user.id,
-      action: 'DELETE',
+      action: 'PERMANENT_DELETE',
       targetTable: 'post',
       targetId: postId,
       details: JSON.stringify({
         deletedBy: locals.user.id,
         deletedByRole: locals.user.role,
-        isAuthorDelete: isAuthor
+        isAuthorDelete: isAuthor,
+        isPermanentDelete: true
       }),
       timestamp: new Date()
     });
 
-    return json({ success: true, message: 'Post deleted successfully' });
+    return json({ success: true, message: 'Post permanently deleted' });
   } catch (err) {
     console.error('Error deleting post:', err);
-    
+
     // If the error is already a SvelteKit error, rethrow it
     if (err instanceof Error && 'status' in err) {
       throw err;
     }
-    
+
     // Otherwise, return a generic error
     throw error(500, 'Failed to delete post');
   }

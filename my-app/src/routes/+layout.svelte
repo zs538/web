@@ -32,6 +32,7 @@
         {#if user.role === 'admin'}
           <li><a href="/admin/log" on:click={e => handleNavigation(e, '/admin/log')}>audit log</a></li>
           <li><a href="/admin/users" on:click={e => handleNavigation(e, '/admin/users')}>user manager</a></li>
+          <li><a href="/admin/cleanup" on:click={e => handleNavigation(e, '/admin/cleanup')}>cleanup</a></li>
         {/if}
 
         <li>
