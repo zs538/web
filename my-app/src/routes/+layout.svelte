@@ -31,7 +31,7 @@
         <!-- Check if user is admin -->
         {#if user.role === 'admin'}
           <li><a href="/admin/log" on:click={e => handleNavigation(e, '/admin/log')}>audit log</a></li>
-          <li><a href="/admin/users" on:click={e => handleNavigation(e, '/admin/users')}>user manager</a></li>
+          <li><a href="/user-manager" on:click={e => handleNavigation(e, '/user-manager')}>user manager</a></li>
         {/if}
 
         <li>
@@ -71,10 +71,27 @@
     font-style: normal;
   }
 
+  @font-face {
+    font-family: 'SuisseIntl';
+    src: url('/Suisse_Intl_Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+  }
+
+  :global(html) {
+    scrollbar-gutter: stable; /* Modern browsers: Reserve space for scrollbar to prevent layout shifts */
+  }
+
+  /* Fallback for browsers that don't support scrollbar-gutter */
+  :global(.container) {
+    padding-right: calc(100vw - 100%); /* Fallback: Compensate for scrollbar width */
+  }
+
   :global(body) {
     font-family: 'ManifoldExtended', sans-serif;
     margin: 0;
     padding: 0;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
   }
 
   /* Global loading indicator removed */

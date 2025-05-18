@@ -3,6 +3,8 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { Argon2id } from 'oslo/password';
 import { db } from '$lib/server/db';
+import { auditLog } from '$lib/server/db/schema';
+import { nanoid } from 'nanoid';
 
 // Redirect to main feed if already logged in
 export const load: PageServerLoad = async ({ locals }) => {
@@ -56,6 +58,20 @@ export const actions: Actions = {
         ...sessionCookie.attributes
       }
     );
+
+    // Log the login action in the audit log
+    await db.insert(auditLog).values({
+      id: nanoid(),
+      userId: existingUser.id,
+      action: 'LOGIN',
+      targetTable: 'user',
+      targetId: existingUser.id,
+      details: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        username: existingUser.username
+      }),
+      timestamp: new Date()
+    });
 
     // Redirect to main feed after login
     throw redirect(303, '/');

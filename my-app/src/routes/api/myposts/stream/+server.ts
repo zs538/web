@@ -30,22 +30,18 @@ export const GET: RequestHandler = async ({ url, locals }) => {
         })
         .from(post)
         .innerJoin(user, eq(post.authorId, user.id))
-        .where(
-          and(
-            eq(post.authorId, userId),
-            eq(post.isDeleted, false)
-          )
-        )
+        .where(eq(post.authorId, userId))
+        // No isDeleted filter - using hard deletion
         .orderBy(desc(post.createdAt))
         .offset(offset)
         .limit(limit + 1); // Fetch one extra to check if there are more
-        
+
         // Check if there are more posts
         const hasMore = postBasics.length > limit;
-        
+
         // Remove the extra post if we fetched more than our limit
         const postsToUse = hasMore ? postBasics.slice(0, limit) : postBasics;
-        
+
         // Send metadata first
         controller.enqueue(
           new TextEncoder().encode(
@@ -56,7 +52,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
             }) + '\n'
           )
         );
-        
+
         // Process each post individually
         for (const postInfo of postsToUse) {
           // Fetch media for this post
@@ -64,7 +60,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
             .from(media)
             .where(eq(media.postId, postInfo.id))
             .orderBy(media.position);
-          
+
           // Construct the full post object
           const fullPost = {
             id: postInfo.id,
@@ -77,7 +73,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
             },
             media: mediaItems
           };
-          
+
           // Send this post immediately
           controller.enqueue(
             new TextEncoder().encode(
@@ -87,11 +83,11 @@ export const GET: RequestHandler = async ({ url, locals }) => {
               }) + '\n'
             )
           );
-          
+
           // Small delay to allow browser to process
           await new Promise(resolve => setTimeout(resolve, 10));
         }
-        
+
         // Signal completion
         controller.enqueue(
           new TextEncoder().encode(
@@ -100,7 +96,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
             }) + '\n'
           )
         );
-        
+
         controller.close();
       } catch (error) {
         console.error('Error streaming user posts:', error);

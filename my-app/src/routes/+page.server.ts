@@ -2,9 +2,20 @@ import { db } from '$lib/server/db/index';
 import { post, media, user } from '$lib/server/db/schema';
 import { eq, desc } from 'drizzle-orm';
 
-export async function load() {
-  // Initial batch size - just enough for fast loading
-  const initialLimit = 2;
+/**
+ * Server load function for the main page
+ * Fetches an initial batch of posts with their media
+ */
+export async function load({ setHeaders }) {
+  // Set comprehensive cache control headers to prevent caching
+  setHeaders({
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+
+  // Initial batch size - balanced for performance and completeness
+  const initialLimit = 5;
 
   try {
     // First, fetch just the post IDs and basic info without media
@@ -17,7 +28,7 @@ export async function load() {
     })
     .from(post)
     .innerJoin(user, eq(post.authorId, user.id))
-    .where(eq(post.isDeleted, false))
+    // No isDeleted filter - using hard deletion
     .orderBy(desc(post.createdAt))
     .limit(initialLimit + 1); // Fetch one extra to check if there are more
 

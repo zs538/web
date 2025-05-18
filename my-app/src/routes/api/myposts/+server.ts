@@ -4,6 +4,11 @@ import { db } from '$lib/server/db';
 import { post, media, user } from '$lib/server/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
 
+/**
+ * API endpoint for fetching the current user's posts
+ * Supports pagination with page and limit parameters
+ * Protected endpoint - only accessible to logged-in users
+ */
 export const GET: RequestHandler = async ({ url, locals }) => {
   // Check if user is logged in
   const userId = locals.user?.id;
@@ -11,9 +16,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     throw error(401, 'Unauthorized');
   }
 
-  // Get pagination parameters from URL
-  const page = parseInt(url.searchParams.get('page') || '1');
-  const limit = parseInt(url.searchParams.get('limit') || '5');
+  // Get pagination parameters from URL with validation
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
+  const limit = Math.min(20, Math.max(1, parseInt(url.searchParams.get('limit') || '5')));
   const offset = (page - 1) * limit;
 
   try {
@@ -27,12 +32,8 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     })
     .from(post)
     .innerJoin(user, eq(post.authorId, user.id))
-    .where(
-      and(
-        eq(post.authorId, userId),
-        eq(post.isDeleted, false)
-      )
-    )
+    .where(eq(post.authorId, userId))
+    // No isDeleted filter - using hard deletion
     .orderBy(desc(post.createdAt))
     .offset(offset)
     .limit(limit + 1); // Fetch one extra to check if there are more
@@ -67,15 +68,30 @@ export const GET: RequestHandler = async ({ url, locals }) => {
       });
     }
 
+    // Return posts with comprehensive cache control headers
     return json({
       posts: postsWithMedia,
       hasMore
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
   } catch (err) {
     console.error('Error fetching user posts from API:', err);
+    // Return empty result with cache control headers
     return json({
       posts: [],
-      hasMore: false
+      hasMore: false,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
   }
 };

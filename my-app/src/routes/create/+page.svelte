@@ -628,10 +628,11 @@
   .create-post-container {
     width: 100%;
     max-width: 500px;
-    padding: 1rem 0;
+    padding: 0;
   }
 
   h1 {
+    font-size: 1.8rem;
     margin-bottom: 1.5rem;
   }
 

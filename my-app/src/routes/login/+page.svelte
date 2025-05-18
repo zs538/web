@@ -28,9 +28,10 @@
   });
 </script>
 
-<h1>Login</h1>
+<div class="login-container">
+  <h1>Login</h1>
 
-<form method="POST" use:enhance>
+  <form method="POST" use:enhance>
   <div>
     <label for="username">Username</label>
     <input type="text" id="username" name="username" required minlength="1">
@@ -52,6 +53,7 @@
     <button type="submit">Login</button>
   </div>
 </form>
+</div>
 
 <style>
   /* Apply box-sizing to all elements */
@@ -59,7 +61,14 @@
     box-sizing: border-box;
   }
 
+  .login-container {
+    width: 100%;
+    max-width: 500px;
+    padding: 0;
+  }
+
   h1 {
+    font-size: 1.8rem;
     margin-bottom: 1.5rem;
   }
 

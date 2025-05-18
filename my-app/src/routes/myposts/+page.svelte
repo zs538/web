@@ -6,30 +6,30 @@
   const currentUser = data.user;
 </script>
 
-<main>
-  <div class="my-posts-header">
-    <h1>My Posts</h1>
-    {#if data.posts && data.posts.length === 0}
-      <p class="no-posts-message">You haven't created any posts yet.</p>
-      <a href="/create" class="create-post-link">Create your first post</a>
-    {/if}
-  </div>
+<div class="myposts-container">
+  <h1>My Posts</h1>
+  {#if data.posts && data.posts.length === 0}
+    <p class="no-posts-message">You haven't created any posts yet.</p>
+    <a href="/create" class="create-post-link">Create your first post</a>
+  {/if}
 
   <PostsSection
     apiEndpoint="/api/myposts"
     initialPosts={data.posts}
     {currentUser}
   />
-</main>
+</div>
 
 <style>
-  .my-posts-header {
-    margin-bottom: 2rem;
+  .myposts-container {
+    width: 100%;
+    max-width: 500px;
+    padding: 0;
   }
 
   h1 {
     font-size: 1.8rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .no-posts-message {

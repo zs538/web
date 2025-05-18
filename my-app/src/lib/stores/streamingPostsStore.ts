@@ -22,7 +22,7 @@ export type Post = {
   text: string | null;
   authorId: string;
   createdAt: Date | string | number;
-  isDeleted?: boolean;
+  // No isDeleted flag - using hard deletion
   author: Author;
   media: Media[];
 };

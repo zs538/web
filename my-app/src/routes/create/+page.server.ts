@@ -43,8 +43,8 @@ export const actions: Actions = {
         authorId: locals.user.id,
         text: postText,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        isDeleted: false
+        updatedAt: new Date()
+        // No isDeleted flag - using hard deletion
       });
 
       console.log('Post created successfully');

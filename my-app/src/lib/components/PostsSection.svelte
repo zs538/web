@@ -55,25 +55,35 @@
   export let currentUser: { id: string; role: string } | null = null; // Current user for authorization
 
   // Local state
-  let scrollContainer: HTMLElement;
   let loading = true;
   let hasMore = true;
   let posts: Post[] = [];
   let newlyLoadedPostIds: string[] = [];
 
-  // Initialize with posts
+  /**
+   * Reactive statement to handle changes to initialPosts
+   * This ensures the component always uses the latest data from the server
+   */
+  $: if (initialPosts && initialPosts.length > 0) {
+    posts = initialPosts;
+    loading = false;
+    hasMore = true; // Reset hasMore to ensure infinite scroll works
+  }
+
+  /**
+   * Initialize component and set up event listeners
+   */
   onMount(() => {
-    // If we have initial posts, use them
+    // Reset state on mount to avoid stale data
+    posts = [];
+
+    // Use server-provided data if available, otherwise fetch from API
     if (initialPosts && initialPosts.length > 0) {
       posts = initialPosts;
       loading = false;
     } else {
-      // Otherwise, load posts from API
       loadInitialPosts();
     }
-
-    // Bind scroll container
-    scrollContainer = document.documentElement;
 
     // Add event listener for post deletion
     const handlePostDeleted = (event: CustomEvent) => {
@@ -91,48 +101,99 @@
     };
   });
 
-  // Load initial posts
+  /**
+   * Load initial batch of posts from the API
+   * Uses cache-busting and proper error handling
+   */
   async function loadInitialPosts() {
     try {
       loading = true;
+      posts = []; // Clear existing posts to avoid duplicates
 
-      const response = await fetch(`${apiEndpoint}?page=1&limit=5`);
+      // Fetch posts with cache-busting to prevent stale data
+      const cacheBuster = `_cb=${Date.now()}`;
+      const response = await fetch(`${apiEndpoint}?page=1&limit=5&${cacheBuster}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (data.posts) {
-        posts = data.posts;
-        hasMore = data.hasMore || false;
+      if (data.posts?.length > 0) {
+        // Ensure we have unique posts by ID
+        const uniquePosts = data.posts.filter((p: Post, index: number, self: Post[]) =>
+          index === self.findIndex((t: Post) => t.id === p.id)
+        );
+
+        posts = uniquePosts;
+        hasMore = Boolean(data.hasMore);
+      } else {
+        posts = [];
+        hasMore = false;
       }
     } catch (error) {
       console.error('Error loading posts:', error);
+      posts = [];
+      hasMore = false;
     } finally {
       loading = false;
     }
   }
 
-  // Load more posts when user scrolls to bottom
+  /**
+   * Load more posts when user scrolls to bottom
+   * Handles pagination, cache-busting, and duplicate detection
+   */
   async function loadMorePosts() {
     if (loading || !hasMore) return;
 
     try {
       loading = true;
 
-      // Calculate next page
-      const nextPage = Math.ceil(posts.length / 5) + 1;
+      // Calculate next page based on current posts count
+      const pageSize = 5;
+      const nextPage = Math.ceil(posts.length / pageSize) + 1;
 
-      const response = await fetch(`${apiEndpoint}?page=${nextPage}&limit=5`);
+      // Fetch next batch of posts with cache-busting
+      const cacheBuster = `_cb=${Date.now()}`;
+      const response = await fetch(`${apiEndpoint}?page=${nextPage}&limit=${pageSize}&${cacheBuster}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (data.posts && data.posts.length > 0) {
+      if (data.posts?.length > 0) {
+        // Filter out any posts we already have to prevent duplicates
+        const existingPostIds = new Set(posts.map(p => p.id));
+        const uniqueNewPosts = data.posts.filter((p: Post) => !existingPostIds.has(p.id));
+
+        if (uniqueNewPosts.length === 0) {
+          // If all returned posts are duplicates, stop infinite scroll
+          hasMore = false;
+          return;
+        }
+
         // Track new post IDs for animation
-        const newPostIds = data.posts.map((post: Post) => post.id);
-        newlyLoadedPostIds = [...newPostIds];
+        newlyLoadedPostIds = uniqueNewPosts.map((post: Post) => post.id);
 
         // Add new posts to the list
-        posts = [...posts, ...data.posts];
+        posts = [...posts, ...uniqueNewPosts];
 
-        // Check if we have more posts to load
-        hasMore = data.hasMore || false;
+        // Update hasMore flag based on API response
+        hasMore = Boolean(data.hasMore);
 
         // Clear animation flags after delay
         setTimeout(() => {
@@ -143,6 +204,7 @@
       }
     } catch (error) {
       console.error('Error loading more posts:', error);
+      // Don't change hasMore on error to allow retrying
     } finally {
       loading = false;
     }

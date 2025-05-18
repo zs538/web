@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { activeDeleteConfirm } from '$lib/stores/deleteConfirmStore';
+
   export let post: {
     id: string;
     text: string | null;
@@ -16,9 +19,6 @@
   // Current user data for authorization
   export let currentUser: { id: string; role: string } | null = null;
 
-  // Delete confirmation state
-  let showDeleteConfirm = false;
-
   // Check if user can delete this post
   $: canDelete = currentUser && (
     // Admin can delete any post
@@ -27,14 +27,26 @@
     currentUser.id === post.author.id
   );
 
+  // Derive showDeleteConfirm from the store value
+  $: showDeleteConfirm = $activeDeleteConfirm === post.id;
+
   // Toggle delete confirmation dialog
   function toggleDeleteConfirm() {
-    showDeleteConfirm = !showDeleteConfirm;
+    // If this post's confirmation is already showing, hide it
+    // Otherwise, show this post's confirmation (which automatically hides others)
+    $activeDeleteConfirm = showDeleteConfirm ? null : post.id;
   }
 
-  // Delete the post
+  // Error state for deletion
+  let deleteError = '';
+  let isDeleting = false;
+
+  // Delete the post permanently
   async function deletePost() {
     if (!canDelete) return;
+
+    isDeleting = true;
+    deleteError = '';
 
     try {
       const response = await fetch(`/api/posts/${post.id}`, {
@@ -51,16 +63,18 @@
           bubbles: true
         });
         document.dispatchEvent(event);
+        // Clear the active delete confirmation
+        $activeDeleteConfirm = null;
       } else {
         const errorData = await response.json();
         console.error('Error deleting post:', errorData);
-        alert('Failed to delete post: ' + (errorData.message || 'Unknown error'));
+        deleteError = errorData.message || 'Failed to delete post';
       }
     } catch (error) {
       console.error('Error deleting post:', error);
-      alert('Failed to delete post. Please try again.');
+      deleteError = 'Network error. Please try again.';
     } finally {
-      showDeleteConfirm = false;
+      isDeleting = false;
     }
   }
 
@@ -69,7 +83,7 @@
     return new Date(ts).toLocaleString();
   }
 
-  import { onMount } from 'svelte';
+  // onMount already imported at the top
 
   // Handle media aspect ratios after component mounts
   onMount(() => {
@@ -233,16 +247,31 @@
     <!-- Delete button - only shown if user can delete this post -->
     {#if canDelete}
       <div class="delete-container">
-        {#if !showDeleteConfirm}
-          <button class="delete-button" on:click={toggleDeleteConfirm} aria-label="Delete post">
-            ×
-          </button>
-        {:else}
-          <div class="delete-confirm">
-            <button class="cancel-button" on:click={toggleDeleteConfirm}>Cancel</button>
-            <button class="confirm-button" on:click={deletePost}>Delete</button>
-          </div>
-        {/if}
+        <button class="delete-button" class:active={showDeleteConfirm} on:click={toggleDeleteConfirm} aria-label="Delete post">
+          <img src="/x-icon.svg" alt="Delete" class="x-icon" />
+        </button>
+      </div>
+    {/if}
+  </div>
+
+  <!-- Delete confirmation - appears under signature when delete button is clicked -->
+  <div class="delete-confirm-container" class:show={showDeleteConfirm}>
+    {#if deleteError}
+      <div class="delete-error">{deleteError}</div>
+    {:else}
+      <div class="delete-confirm-message">
+        <span>Are you sure?</span>
+        <button
+          class="delete-confirm-button"
+          on:click={deletePost}
+          disabled={isDeleting}
+        >
+          {#if isDeleting}
+            Deleting...
+          {:else}
+            Delete
+          {/if}
+        </button>
       </div>
     {/if}
   </div>
@@ -252,7 +281,7 @@
   .post {
     margin-bottom: 24px;
     border-radius: 0px;
-    padding: 12px 16px;
+    padding: 12px 16px 10px 16px;
     background: #fff;
     position: relative;
   }
@@ -346,6 +375,13 @@
     margin: 10px 0;
     font-size: 1.1em;
     line-height: 1.7;
+    overflow-wrap: break-word; /* Break long words */
+    word-wrap: break-word; /* Legacy property for IE support */
+    word-break: break-word; /* More elegant breaking than break-all */
+    hyphens: auto; /* Add hyphens when breaking words */
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    white-space: pre-wrap; /* Preserve whitespace and newlines */
   }
 
   .post-signature {
@@ -377,38 +413,81 @@
   .delete-button {
     background: none;
     border: none;
-    color: #999;
-    font-size: 1.2em;
     cursor: pointer;
     padding: 0 5px;
-    line-height: 1;
-    transition: color 0.2s;
-  }
-
-  .delete-button:hover {
-    color: #ff3b30;
-  }
-
-  .delete-confirm {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .x-icon {
+    width: 10px;
+    height: 10px;
+    display: block;
+    color: #999;
+    transition: transform 0.25s ease;
+    transform: rotate(0deg);
+  }
+
+  .delete-button:hover .x-icon {
+    filter: brightness(0) saturate(100%) invert(40%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(90%) contrast(100%);
+  }
+
+  .delete-button.active .x-icon {
+    transform: rotate(45deg);
+  }
+
+  /* Delete confirmation styling */
+  .delete-confirm-container {
+    text-align: right;
+    margin-top: 0;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+  }
+
+  .delete-confirm-container.show {
+    max-height: 40px; /* Slightly larger to ensure content fits */
+    opacity: 1;
+    margin-top: 10px;
+    pointer-events: auto;
+  }
+
+  .delete-confirm-message {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
     gap: 8px;
-  }
-
-  .cancel-button, .confirm-button {
     font-size: 0.75em;
-    padding: 2px 6px;
-    border: none;
-    border-radius: 3px;
+    color: #aaa;
+    font-style: italic;
+  }
+
+  .delete-confirm-button {
+    background-color: transparent;
+    color: #888;
+    font-size: 0.7em;
+    font-weight: 400;
+    padding: 1px 8px;
+    margin-top: 1px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
     cursor: pointer;
+    transition: all 0.2s ease;
   }
 
-  .cancel-button {
-    background-color: #f1f1f1;
-    color: #666;
+  .delete-confirm-button:hover {
+    color: #ff3b30;
+    border-color: #ff3b30;
   }
 
-  .confirm-button {
-    background-color: #ff3b30;
-    color: white;
+  .delete-error {
+    color: #ff3b30;
+    font-size: 0.75em;
+    font-weight: 400;
+    text-align: right;
   }
 </style>
