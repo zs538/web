@@ -108,10 +108,20 @@ const MEDIA = [
 ];
 
 async function seed() {
-  // 1. Clear all data in dependency order
-  await db.delete(media);
-  await db.delete(post);
-  await db.delete(user);
+  try {
+    // 1. Clear all data in dependency order
+    console.log('Deleting media...');
+    await db.delete(media);
+
+    console.log('Deleting posts...');
+    await db.delete(post);
+
+    console.log('Deleting users...');
+    await db.delete(user);
+  } catch (error) {
+    console.error('Error clearing data:', error);
+    // Continue with seeding anyway
+  }
 
   console.log('Deleted existing data.');
 

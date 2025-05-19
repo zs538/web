@@ -4,6 +4,7 @@ import { protectRoute } from '$lib/server/auth/protect';
 import { db } from '$lib/server/db';
 import { post, media } from '$lib/server/db/schema';
 import { nanoid } from 'nanoid';
+import { storageService, dataUrlToBuffer, getFileTypeFromDataUrl } from '$lib/server/storage';
 
 // Protect this route - only logged in users can access
 export const load: PageServerLoad = async (event) => {
@@ -66,17 +67,96 @@ export const actions: Actions = {
             console.log(`Media item ${i}: ${mediaType} - ${mediaUrl ? 'URL present' : 'URL missing'}`);
 
             if (mediaType && mediaUrl) {
-              // For now, we're just storing the data URLs directly
-              // In a production app, you'd want to process uploads and store them properly
-              mediaItems.push({
-                id: nanoid(),
-                postId,
-                type: mediaType,
-                url: mediaUrl,
-                caption: mediaCaption,
-                position: mediaPosition,
-                uploadedAt: new Date()
-              });
+              // Handle different media types
+              if (mediaType === 'embed') {
+                // For embeds, we just store the URL directly
+                mediaItems.push({
+                  id: nanoid(),
+                  postId,
+                  type: mediaType,
+                  url: mediaUrl,
+                  caption: mediaCaption,
+                  position: mediaPosition,
+                  uploadedAt: new Date()
+                });
+              } else if (mediaUrl.startsWith('data:')) {
+                // For data URLs (uploaded files), process and store them properly
+                try {
+                  // Get the file type from the data URL
+                  const fileType = getFileTypeFromDataUrl(mediaUrl);
+                  if (!fileType) {
+                    console.error(`Invalid file type for media item ${i}`);
+                    continue;
+                  }
+
+                  // Convert data URL to buffer
+                  const fileBuffer = dataUrlToBuffer(mediaUrl);
+
+                  // Upload the file to storage with transaction-like behavior
+                  try {
+                    // Upload the file to storage
+                    const { url, id } = await storageService.uploadFile(
+                      fileBuffer,
+                      fileType,
+                      mediaCaption || undefined
+                    );
+
+                    // Add the media item with the file URL
+                    mediaItems.push({
+                      id,
+                      postId,
+                      type: mediaType,
+                      url,
+                      caption: mediaCaption,
+                      position: mediaPosition,
+                      uploadedAt: new Date()
+                    });
+
+                    console.log(`Uploaded media item ${i} to storage: ${url}`);
+                  } catch (validationError) {
+                    // Check if it's a validation error
+                    if (validationError instanceof Error &&
+                        validationError.message.includes('Invalid file format')) {
+                      console.error(`File validation error for media item ${i}:`, validationError.message);
+
+                      // Return a user-friendly error
+                      return {
+                        success: false,
+                        error: `Invalid file format detected. Please ensure your files match their claimed types.`
+                      };
+                    }
+
+                    // For other errors, rethrow to be caught by the outer catch
+                    throw validationError;
+                  }
+                } catch (uploadError) {
+                  console.error(`Error uploading media item ${i}:`, uploadError);
+
+                  // Provide a more specific error message if possible
+                  if (uploadError instanceof Error) {
+                    if (uploadError.message.includes('Failed to process file')) {
+                      return {
+                        success: false,
+                        error: `Failed to process media item ${i+1}. The file may be corrupted or in an unsupported format.`
+                      };
+                    }
+                  }
+
+                  // Continue with next media item for non-critical errors
+                  continue;
+                }
+              } else {
+                // For regular URLs, store them directly
+                mediaItems.push({
+                  id: nanoid(),
+                  postId,
+                  type: mediaType,
+                  url: mediaUrl,
+                  caption: mediaCaption,
+                  position: mediaPosition,
+                  uploadedAt: new Date()
+                });
+              }
             }
           }
 

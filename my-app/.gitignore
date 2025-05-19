@@ -27,3 +27,7 @@ vite.config.ts.timestamp-*
 *.sqlite
 *.sqlite3
 my-app.sqlite
+
+# Uploaded files
+/static/uploads/*
+!static/uploads/.gitkeep

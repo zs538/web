@@ -581,14 +581,21 @@
       <!-- Pagination -->
       <div class="pagination">
         <button
+          class="page-btn first"
+          disabled={currentPage === 1}
+          on:click={() => goToPage(1)}
+          aria-label="First page"
+        >
+          <img src="/chevron-first.svg" alt="First page" class="chevron-icon" />
+        </button>
+
+        <button
           class="page-btn prev"
           disabled={currentPage === 1}
           on:click={() => goToPage(currentPage - 1)}
           aria-label="Previous page"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="chevron-icon">
-            <path d="M13.5 7L9.5 12L13.5 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <img src="/chevron-left.svg" alt="Previous page" class="chevron-icon" />
         </button>
 
         {#if isEditingPage}
@@ -643,9 +650,16 @@
           on:click={() => goToPage(currentPage + 1)}
           aria-label="Next page"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="chevron-icon">
-            <path d="M10.5 7L14.5 12L10.5 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <img src="/chevron-right.svg" alt="Next page" class="chevron-icon" />
+        </button>
+
+        <button
+          class="page-btn last"
+          disabled={currentPage === totalPages}
+          on:click={() => goToPage(totalPages)}
+          aria-label="Last page"
+        >
+          <img src="/chevron-last.svg" alt="Last page" class="chevron-icon" />
         </button>
       </div>
     {/if}
@@ -1200,10 +1214,15 @@
   .chevron-icon {
     width: 16px;
     height: 16px;
+    filter: invert(50%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
   }
 
-  .chevron-icon path {
-    stroke: #777;
+  /* Slightly lighter and smaller for first/last page icons */
+  .page-btn.first .chevron-icon,
+  .page-btn.last .chevron-icon {
+    width: 14px;
+    height: 14px;
+    filter: invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
   }
 
   .page-btn:disabled .chevron-icon {
