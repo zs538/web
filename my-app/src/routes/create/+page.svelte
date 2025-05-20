@@ -14,6 +14,7 @@
     url?: string;
     domain?: string;
     timestamp?: number; // Add timestamp for uniqueness
+    originalUrl?: string; // Store the original URL for embeds
   };
 
   type MediaItem = {
@@ -30,14 +31,11 @@
     audio: ['audio/mpeg', 'audio/ogg', 'audio/wav']
   };
 
-  // Allowed embed domains
-  const ALLOWED_EMBED_DOMAINS = [
-    'youtube.com', 'youtu.be',
-    'vimeo.com',
-    'soundcloud.com',
-    'spotify.com',
-    'music.apple.com'
-  ];
+  // Import the embed utility
+  import { getEmbedInfo, isSupportedEmbedUrl, getSupportedEmbedDomains } from '$lib/utils/embed-utils';
+
+  // Get the list of supported embed domains for validation
+  const SUPPORTED_EMBED_DOMAINS = getSupportedEmbedDomains();
 
   // Maximum file size (15MB)
   const MAX_FILE_SIZE = 15 * 1024 * 1024;
@@ -149,20 +147,24 @@
     if (!url) return;
 
     try {
-      const embedUrl = new URL(url);
-      const domain = embedUrl.hostname.replace('www.', '');
+      // Validate URL format
+      new URL(url); // Will throw if invalid URL
 
-      // Check if domain is allowed
-      if (!ALLOWED_EMBED_DOMAINS.some(allowed => domain.includes(allowed))) {
-        alert('This embed domain is not supported');
+      // Get embed info
+      const embedInfo = getEmbedInfo(url);
+
+      if (!embedInfo) {
+        alert('This URL is not supported. Please use a URL from YouTube, Vimeo, Spotify, or SoundCloud.');
         return;
       }
 
+      // Store the embed info
       mediaItems[index] = {
         type: 'embed',
         data: {
-          url,
-          domain
+          url: embedInfo.embedUrl,
+          domain: embedInfo.platform,
+          originalUrl: url
         }
       };
 
@@ -173,7 +175,7 @@
 
       mediaItems = [...mediaItems]; // Trigger reactivity
     } catch (e) {
-      alert('Invalid URL');
+      alert('Invalid URL. Please enter a valid URL.');
     }
   }
 
@@ -561,8 +563,17 @@
                   </div>
                 {:else if item.type === 'embed' && item.data}
                   <div class="embed-preview">
-                    <span class="embed-icon">🔗</span>
-                    <span class="embed-url">{item.data.domain || 'Embed'}</span>
+                    {#if item.data.domain === 'youtube' || item.data.domain === 'vimeo'}
+                      <span class="embed-icon video-embed-icon">▶</span>
+                    {:else if item.data.domain === 'spotify' || item.data.domain === 'soundcloud'}
+                      <span class="embed-icon audio-embed-icon">♪</span>
+                    {:else}
+                      <span class="embed-icon">🔗</span>
+                    {/if}
+                    <span class="embed-url">{item.data.domain}</span>
+                    {#if item.data.originalUrl}
+                      <span class="embed-original-url">{item.data.originalUrl}</span>
+                    {/if}
                   </div>
                 {/if}
               </div>
@@ -816,6 +827,25 @@
   .play-icon, .audio-icon, .embed-icon {
     margin-right: 0.5rem;
     font-size: 1.2rem;
+  }
+
+  .video-embed-icon {
+    color: #ff0000; /* YouTube red */
+  }
+
+  .audio-embed-icon {
+    color: #1DB954; /* Spotify green */
+  }
+
+  .embed-original-url {
+    display: block;
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 0.25rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .filename {

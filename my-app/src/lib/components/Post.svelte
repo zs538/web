@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { activeDeleteConfirm } from '$lib/stores/deleteConfirmStore';
+  import MediaEmbed from './MediaEmbed.svelte';
+  import AudioPlayer from './AudioPlayer.svelte';
 
   export let post: {
     id: string;
@@ -82,8 +84,6 @@
   function formatDate(ts: Date | string | number) {
     return new Date(ts).toLocaleString();
   }
-
-  // onMount already imported at the top
 
   // Handle media aspect ratios after component mounts
   onMount(() => {
@@ -191,8 +191,6 @@
     if (!mediaItem) return;
     applyAspectRatioClass(mediaItem, aspectRatio);
   }
-
-
 </script>
 
 <article class="post">
@@ -218,15 +216,16 @@
               <track kind="captions" label="Captions" />
             </video>
           {:else if media.type === 'audio'}
-            <audio controls src={media.url}></audio>
-          {:else if media.type === 'embed'}
-            <iframe
+            <AudioPlayer
               src={media.url}
-              frameborder="0"
-              allowfullscreen
-              style="width:100%; min-height:320px"
-              title={media.caption || "Embed"}>
-            </iframe>
+              title={media.caption || 'Audio'}
+              preload="metadata"
+            />
+          {:else if media.type === 'embed'}
+            <MediaEmbed
+              url={media.url}
+              title={media.caption || "Embedded content"}
+            />
           {/if}
         </div>
       {/each}
@@ -359,14 +358,8 @@
     width: 100%;
   }
 
-  .media-item iframe {
-    width: 100%;
-    min-height: 320px;
-    border-radius: 0px;
-    background: #f6f6f6;
-    display: block;
-  }
-  .media-item audio {
+  /* Styling for audio player and embeds */
+  :global(.media-item .audio-player) {
     width: 100%;
     display: block;
   }

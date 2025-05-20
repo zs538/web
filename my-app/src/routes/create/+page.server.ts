@@ -5,6 +5,7 @@ import { db } from '$lib/server/db';
 import { post, media } from '$lib/server/db/schema';
 import { nanoid } from 'nanoid';
 import { storageService, dataUrlToBuffer, getFileTypeFromDataUrl } from '$lib/server/storage';
+import { getEmbedInfo } from '$lib/utils/embed-utils';
 
 // Protect this route - only logged in users can access
 export const load: PageServerLoad = async (event) => {
@@ -69,13 +70,35 @@ export const actions: Actions = {
             if (mediaType && mediaUrl) {
               // Handle different media types
               if (mediaType === 'embed') {
-                // For embeds, we just store the URL directly
+                // For embeds, ensure we have a proper embed URL
+                let finalUrl = mediaUrl;
+                let finalCaption = mediaCaption;
+
+                // Check if this is a regular URL that needs transformation
+                if (!mediaUrl.includes('/embed/') && !mediaUrl.includes('player.')) {
+                  const embedInfo = getEmbedInfo(mediaUrl);
+                  if (embedInfo) {
+                    finalUrl = embedInfo.embedUrl;
+
+                    // If no caption was provided, use the platform name
+                    if (!finalCaption) {
+                      // For Spotify, include the content type in the caption
+                      if (embedInfo.platform === 'spotify' && embedInfo.meta?.spotify?.contentType) {
+                        finalCaption = `Spotify ${embedInfo.meta.spotify.contentType}`;
+                      } else {
+                        finalCaption = embedInfo.platform;
+                      }
+                    }
+                  }
+                }
+
+                // Store the embed URL
                 mediaItems.push({
                   id: nanoid(),
                   postId,
                   type: mediaType,
-                  url: mediaUrl,
-                  caption: mediaCaption,
+                  url: finalUrl,
+                  caption: finalCaption,
                   position: mediaPosition,
                   uploadedAt: new Date()
                 });

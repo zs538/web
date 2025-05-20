@@ -14,12 +14,14 @@
   let filteredUsers = users;
   let showAddUserForm = false;
   let showConfirmDialog = false;
+  let showPasswordResetPopup = false;
   let actionTarget: string | null = null;
   let actionType = '';
   let loading = false;
   let error = '';
   let success = '';
   let showFilterMenu = false; // Track if filter menu is open
+  let newPassword = ''; // For password reset
 
   // Message timer state
   let messageTimer: ReturnType<typeof setTimeout> | null = null;
@@ -89,21 +91,57 @@
     filterSort = 'newest';
   }
 
+  /**
+   * Generates a random password with only letters and numbers
+   * Uses cryptographically secure random values for better security
+   */
+  function generatePassword(): void {
+    const lowercase: string = 'abcdefghijklmnopqrstuvwxyz';
+    const uppercase: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers: string = '0123456789';
+    const charset: string = lowercase + uppercase + numbers;
+
+    // Password length
+    const passwordLength: number = 12;
+
+    // Generate secure random values
+    const randomValues = new Uint32Array(passwordLength);
+    crypto.getRandomValues(randomValues);
+
+    // Generate password
+    let generatedPassword: string = '';
+    for (let i = 0; i < passwordLength; i++) {
+      generatedPassword += charset[randomValues[i] % charset.length];
+    }
+
+    newPassword = generatedPassword;
+  }
 
 
   // Show confirmation dialog for actions
   function confirmAction(userId: string, action: string) {
     actionTarget = userId;
     actionType = action;
-    showConfirmDialog = true;
+
+    if (action === 'reset-password') {
+      // For password reset, show the custom popup instead
+      newPassword = ''; // Clear any previous password
+      showPasswordResetPopup = true;
+    } else {
+      // For other actions, use the standard confirm dialog
+      showConfirmDialog = true;
+    }
+
     $activeDropdown = null; // Close the dropdown when an action is selected
   }
 
   // Cancel action
   function cancelAction() {
     showConfirmDialog = false;
+    showPasswordResetPopup = false;
     actionTarget = null;
     actionType = '';
+    newPassword = '';
   }
 
   // Refresh user list
@@ -136,6 +174,7 @@
 
       let endpoint = '';
       let method = 'POST';
+      let body = null;
 
       switch (actionType) {
         case 'delete-user':
@@ -144,6 +183,10 @@
           break;
         case 'reset-password':
           endpoint = `/api/users/${actionTarget}/reset-password`;
+          // If we have a custom password, send it in the request body
+          if (newPassword) {
+            body = JSON.stringify({ password: newPassword });
+          }
           break;
         case 'delete-posts':
           endpoint = `/api/users/${actionTarget}/delete-posts`;
@@ -152,7 +195,14 @@
           throw new Error('Invalid action type');
       }
 
-      const response = await fetch(endpoint, { method });
+      // Prepare fetch options
+      const fetchOptions: RequestInit = {
+        method,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body
+      };
+
+      const response = await fetch(endpoint, fetchOptions);
 
       if (response.ok) {
         const result = await response.json();
@@ -172,8 +222,10 @@
     } finally {
       loading = false;
       showConfirmDialog = false;
+      showPasswordResetPopup = false;
       actionTarget = null;
       actionType = '';
+      newPassword = '';
     }
   }
 
@@ -222,6 +274,11 @@
       // We don't need to check for clicks outside the backdrop since it covers the whole screen
       if (showFilterMenu && event.target.classList.contains('filter-dialog-backdrop')) {
         showFilterMenu = false;
+      }
+
+      // Close password reset popup if open and click is outside the dialog
+      if (showPasswordResetPopup && event.target.classList.contains('confirm-dialog-backdrop')) {
+        cancelAction();
       }
     }
   }
@@ -552,8 +609,6 @@
         <p>
           {#if actionType === 'delete-user'}
             Are you sure you want to permanently delete this user?
-          {:else if actionType === 'reset-password'}
-            Reset this user's password? A new random password will be generated.
           {:else if actionType === 'delete-posts'}
             Delete ALL posts by this user? This cannot be undone.
           {/if}
@@ -562,6 +617,48 @@
           <button class="cancel-btn" on:click={cancelAction}>Cancel</button>
           <button class="confirm-btn" on:click={executeAction} disabled={loading}>
             {loading ? 'Processing...' : 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  {#if showPasswordResetPopup}
+    <div class="confirm-dialog-backdrop" transition:fade={{ duration: 300, easing: quintOut }}>
+      <div class="confirm-dialog" transition:slide={{ duration: 200, easing: quintOut }}>
+        <h3>Reset Password</h3>
+        <div class="password-reset-form">
+          <div class="form-group password-group">
+            <label for="new-password">New Password</label>
+            <div class="password-input-container">
+              <input
+                type="text"
+                id="new-password"
+                bind:value={newPassword}
+                disabled={loading}
+                required
+                minlength="6"
+                placeholder="Enter password or generate one"
+              />
+              <button
+                type="button"
+                class="generate-btn"
+                on:click={generatePassword}
+                disabled={loading}
+              >
+                Generate
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="confirm-actions">
+          <button class="cancel-btn" on:click={cancelAction}>Cancel</button>
+          <button
+            class="confirm-btn"
+            on:click={executeAction}
+            disabled={loading || !newPassword}
+          >
+            {loading ? 'Processing...' : 'Reset Password'}
           </button>
         </div>
       </div>
@@ -1045,20 +1142,11 @@
     background-color: rgba(0, 0, 0, 0.1);
   }
 
-  .view-posts {
-    color: #2196f3;
-  }
-
-  .reset-password {
-    color: #ff9800;
-  }
-
-  .delete-posts {
-    color: #f44336;
-  }
-
+  .view-posts,
+  .reset-password,
+  .delete-posts,
   .delete-user {
-    color: #f44336;
+    color: #333;
   }
 
   .loading, .no-results {
@@ -1156,5 +1244,62 @@
   .confirm-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* Password reset popup styles */
+  .password-reset-form {
+    margin: 15px 0;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .password-group label {
+    font-size: 14px;
+    font-family: 'ManifoldExtended', sans-serif;
+  }
+
+  .password-input-container {
+    display: flex;
+    gap: 10px;
+  }
+
+  .password-input-container input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    font-family: 'SuisseIntl', sans-serif;
+    font-weight: 300;
+    color: #333;
+    transition: all 0.15s ease;
+  }
+
+  .password-input-container input:focus {
+    outline: none;
+    border: 1px solid #3498db;
+    background-color: #ffffff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .generate-btn {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'ManifoldExtended', sans-serif;
+    transition: all 0.15s ease;
+  }
+
+  .generate-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .generate-btn:active {
+    background-color: rgba(0, 0, 0, 0.1);
   }
 </style>

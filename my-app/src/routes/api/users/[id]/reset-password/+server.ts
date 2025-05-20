@@ -7,10 +7,13 @@ import { nanoid } from 'nanoid';
 
 /**
  * Generate a random password
- * Creates a secure random password with letters, numbers, and special characters
+ * Creates a secure random password with only letters and numbers (no special characters)
  */
 function generateRandomPassword(length = 12) {
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const charset = lowercase + uppercase + numbers;
   let password = '';
 
   // Generate cryptographically secure random values
@@ -29,7 +32,7 @@ function generateRandomPassword(length = 12) {
  * POST endpoint for resetting a user's password
  * Protected endpoint - only accessible to admin users
  */
-export const POST: RequestHandler = async ({ params, locals }) => {
+export const POST: RequestHandler = async ({ params, locals, request }) => {
   // Check if user is logged in and has admin role
   if (!locals.user || locals.user.role !== 'admin') {
     throw error(403, 'Forbidden - Admin access required');
@@ -47,10 +50,24 @@ export const POST: RequestHandler = async ({ params, locals }) => {
       throw error(404, 'User not found');
     }
 
-    // Generate a new random password
-    const newPassword = generateRandomPassword();
+    // Check if a custom password was provided in the request body
+    let newPassword: string;
 
-    // Hash the new password
+    try {
+      const body = await request.json();
+      newPassword = body.password;
+
+      // Validate the provided password
+      if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+        // If invalid, fall back to generating a random password
+        newPassword = generateRandomPassword();
+      }
+    } catch (e) {
+      // If no valid JSON body or no password provided, generate a random one
+      newPassword = generateRandomPassword();
+    }
+
+    // Hash the password
     const { Argon2id } = await import('oslo/password');
     const hasher = new Argon2id();
     const passwordHash = await hasher.hash(newPassword);
@@ -80,9 +97,15 @@ export const POST: RequestHandler = async ({ params, locals }) => {
       });
     });
 
+    // Create a more specific message based on whether a custom password was provided
+    // We determine this by checking if the request had a JSON body with a valid password
+    const message = request.headers.get('Content-Type') === 'application/json'
+      ? `Password for user "${userToUpdate.username}" has been reset to the specified password`
+      : `Password for user "${userToUpdate.username}" has been reset to a new random password`;
+
     return json({
       success: true,
-      message: `Password for user "${userToUpdate.username}" has been reset`,
+      message,
       newPassword // Return the new password so it can be shown to the admin
     });
   } catch (err) {

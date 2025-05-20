@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { db } from './index';
 import { user, post, media } from './schema';
 import { Argon2id } from "oslo/password";
+import { getEmbedInfo } from '$lib/utils/embed-utils';
 
 
 // Posts with hard-coded, readable timestamps (UTC)
@@ -63,14 +64,23 @@ const MEDIA = [
     caption: 'Sample audio clip',
     position: 2,
   },
-  // Media for post p3 - embed
+  // Media for post p3 - YouTube embed
   {
     id: 'm4',
     postId: 'p3',
     type: 'embed',
-    url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    caption: 'Rick Astley - Never Gonna Give You Up',
+    url: getEmbedInfo('https://www.youtube.com/watch?v=dQw4w9WgXcQ')?.embedUrl || 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+    caption: 'YouTube: Rick Astley - Never Gonna Give You Up',
     position: 0,
+  },
+  // Media for post p3 - Spotify embed
+  {
+    id: 'm9',
+    postId: 'p3',
+    type: 'embed',
+    url: getEmbedInfo('https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT')?.embedUrl || 'https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT',
+    caption: 'Spotify: Rick Astley - Never Gonna Give You Up',
+    position: 1,
   },
   // Media for post p4 - gallery of images (max 4)
   {
