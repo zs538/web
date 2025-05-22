@@ -49,7 +49,8 @@
 
     // Update seek slider progress
     const percent = duration > 0 ? (value / duration) * 100 : 0;
-    document.documentElement.style.setProperty('--seek-percent', `${percent}%`);
+    const slider = target as HTMLElement;
+    slider.style.setProperty('--seek-percent', `${percent}%`);
   }
 
   // Toggle mute
@@ -57,10 +58,14 @@
     audio.muted = !audio.muted;
     isMuted = audio.muted;
 
-    if (isMuted) {
-      document.documentElement.style.setProperty('--volume-percent', '0%');
-    } else {
-      document.documentElement.style.setProperty('--volume-percent', `${volumeValue}%`);
+    // Find the volume slider in this specific audio player
+    const volumeSlider = document.querySelector(`.audio-player:has(audio[src="${src}"]) .volume-slider`) as HTMLElement;
+    if (volumeSlider) {
+      if (isMuted) {
+        volumeSlider.style.setProperty('--volume-percent', '0%');
+      } else {
+        volumeSlider.style.setProperty('--volume-percent', `${volumeValue}%`);
+      }
     }
   }
 
@@ -75,7 +80,8 @@
     isMuted = volume === 0;
     audio.muted = isMuted;
 
-    document.documentElement.style.setProperty('--volume-percent', `${value}%`);
+    // Update volume slider for this specific instance
+    target.style.setProperty('--volume-percent', `${value}%`);
   }
 
   // Show volume slider
@@ -104,7 +110,12 @@
 
     // Update seek slider progress
     const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
-    document.documentElement.style.setProperty('--seek-percent', `${percent}%`);
+
+    // Find the seek slider in this specific audio player
+    const seekSlider = document.querySelector(`.audio-player:has(audio[src="${src}"]) .seek-slider`) as HTMLElement;
+    if (seekSlider) {
+      seekSlider.style.setProperty('--seek-percent', `${percent}%`);
+    }
 
     animationFrame = requestAnimationFrame(updateTimeDisplay);
   }
@@ -122,8 +133,21 @@
   // Event handlers for audio element
   function handleLoadedMetadata(): void {
     duration = audio.duration;
-    document.documentElement.style.setProperty('--seek-percent', '0%');
-    document.documentElement.style.setProperty('--volume-percent', '100%');
+
+    // Find the sliders in this specific audio player
+    const container = document.querySelector(`.audio-player:has(audio[src="${src}"])`) as HTMLElement;
+    if (container) {
+      const seekSlider = container.querySelector('.seek-slider') as HTMLElement;
+      const volumeSlider = container.querySelector('.volume-slider') as HTMLElement;
+
+      if (seekSlider) {
+        seekSlider.style.setProperty('--seek-percent', '0%');
+      }
+
+      if (volumeSlider) {
+        volumeSlider.style.setProperty('--volume-percent', '100%');
+      }
+    }
 
     // Initialize volume
     audio.volume = volume;
@@ -279,20 +303,20 @@
     width: 100%;
     background-color: #f5f5f5;
     border: none;
-    border-radius: 0;
+    border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   .player-container {
     display: flex;
     align-items: stretch;
-    height: 60px;
+    height: 69px; /* Adjusted height for the player */
   }
 
   /* Cover/thumbnail styles */
   .cover-container {
-    width: 60px;
-    height: 60px;
+    width: 69px; /* Adjusted to match the new height */
+    height: 69px; /* Adjusted to match the new height */
     position: relative;
     background: none;
     border: none;
@@ -342,28 +366,27 @@
   /* Controls section styles */
   .controls-section {
     flex: 1;
-    padding: 8px 10px;
+    padding: 6px 10px 4px 10px; /* Adjusted padding: 6px top, 4px bottom, 10px left and right */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
   }
 
   .audio-title {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-family: 'ManifoldExtendedCF-Medium', sans-serif;
     color: #333;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
+    padding-top: 0;
   }
 
   .time-display {
     font-size: 0.75rem;
     color: #666;
-    font-family: 'ManifoldExtendedCF-Medium', sans-serif;
     white-space: nowrap;
-    margin-bottom: 4px;
+    margin-bottom: 0;
   }
 
   .time-separator {
@@ -374,6 +397,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-top: 0; /* Remove space above sliders to fit everything better */
   }
 
   .seek-container {
@@ -530,6 +554,10 @@
   @media (max-width: 400px) {
     .time-display {
       font-size: 0.7rem;
+    }
+
+    .audio-title {
+      font-size: 0.8rem;
     }
 
     .volume-container.volume-active {

@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { user, session, auditLog } from '$lib/server/db/schema';
+import { user, session, auditLog, post, media } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
@@ -69,25 +69,56 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 
     // Start a transaction to ensure all related data is deleted
     await db.transaction(async (tx) => {
-      // Delete all sessions for this user
-      await tx.delete(session).where(eq(session.userId, userId));
+      try {
+        // 1. Get all post IDs by this user
+        const userPosts = await db.select({ id: post.id })
+          .from(post)
+          .where(eq(post.authorId, userId));
 
-      // Log the deletion in audit log
-      await tx.insert(auditLog).values({
-        id: nanoid(),
-        userId: locals.user.id,
-        action: 'DELETE_USER',
-        targetTable: 'user',
-        targetId: userId,
-        details: JSON.stringify({
-          deletedUsername: userToDelete.username,
-          deletedByUserId: locals.user.id
-        }),
-        timestamp: new Date()
-      });
+        const postIds = userPosts.map(p => p.id);
 
-      // Finally, delete the user
-      await tx.delete(user).where(eq(user.id, userId));
+        // 2. For each post by this user, delete associated media
+        for (const postId of postIds) {
+          try {
+            await tx.delete(media).where(eq(media.postId, postId));
+          } catch (mediaErr) {
+            console.log(`Error deleting media for post ${postId}:`, mediaErr);
+            // Continue with other posts
+          }
+        }
+
+        // 3. Delete all posts by this user
+        await tx.delete(post).where(eq(post.authorId, userId));
+
+        // 4. Delete all sessions for this user
+        await tx.delete(session).where(eq(session.userId, userId));
+
+        // 5. Delete audit logs where this user is referenced
+        // Note: We need to handle this carefully to avoid deleting the current admin's actions
+        // Only delete logs where the deleted user is the actor (userId), not the target
+        await tx.delete(auditLog).where(eq(auditLog.userId, userId));
+
+        // 6. Log the deletion in audit log
+        await tx.insert(auditLog).values({
+          id: nanoid(),
+          userId: locals.user.id,
+          action: 'DELETE_USER',
+          targetTable: 'user',
+          targetId: userId,
+          details: JSON.stringify({
+            deletedUsername: userToDelete.username,
+            deletedByUserId: locals.user.id,
+            deletedPostCount: postIds.length
+          }),
+          timestamp: new Date()
+        });
+
+        // 7. Finally, delete the user
+        await tx.delete(user).where(eq(user.id, userId));
+      } catch (txErr) {
+        console.error('Error in delete transaction:', txErr);
+        throw txErr; // Re-throw to be caught by the outer try-catch
+      }
     });
 
     return json({
@@ -102,7 +133,14 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
       throw err;
     }
 
-    throw error(500, 'Failed to delete user');
+    // Check for SQLite constraint errors
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    if (errorMessage.includes('FOREIGN KEY constraint failed')) {
+      console.error('Foreign key constraint error when deleting user. This might indicate there are still references to this user in the database.');
+      throw error(500, 'Failed to delete user: Database constraint error. There might be data still linked to this user.');
+    }
+
+    throw error(500, 'Failed to delete user: ' + errorMessage);
   }
 };
 

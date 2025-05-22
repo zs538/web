@@ -214,7 +214,8 @@
         }
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Action failed');
+        console.error('API error response:', errorData);
+        throw new Error(errorData.message || `Action failed (${response.status}: ${response.statusText})`);
       }
     } catch (err: unknown) {
       console.error(`Error executing ${actionType}:`, err);
