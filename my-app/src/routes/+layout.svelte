@@ -1,6 +1,8 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { navigate } from '$lib/utils/navigation';
+  import { browser } from '$app/environment';
+  import ImageGallery from '$lib/components/ImageGallery.svelte';
 
   // Access the user data from page.data
   $: user = $page.data.user;
@@ -55,6 +57,11 @@
     <slot />
   </main>
 </div>
+
+<!-- Global Image Gallery - only render on client side -->
+{#if browser}
+  <ImageGallery />
+{/if}
 
 <style>
   @font-face {

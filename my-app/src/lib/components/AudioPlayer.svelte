@@ -95,7 +95,7 @@
     if (volumeTimeout) clearTimeout(volumeTimeout);
     volumeTimeout = setTimeout(() => {
       showVolumeSlider = false;
-    }, 2000); // Hide after 2 seconds
+    }, 400); // Hide after 400ms
   }
 
   // Update time display during playback
@@ -230,7 +230,7 @@
     <!-- Controls section -->
     <div class="controls-section">
       <!-- Title -->
-      <div class="audio-title">{title}</div>
+      <div class="audio-title" title={title}>{title}</div>
 
       <!-- Time display -->
       <div class="time-display">
@@ -275,7 +275,7 @@
               </svg>
             {:else}
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
-                <path d="M3 9v6h4l5 5V4L7 9H3z" fill="currentColor" />
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="currentColor" />
               </svg>
             {/if}
           </button>
@@ -370,6 +370,8 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-width: 0; /* Allow flex item to shrink below its content size */
+    overflow: hidden; /* Prevent overflow from this container */
   }
 
   .audio-title {
@@ -518,6 +520,7 @@
     outline: none;
     border-radius: 0;
     cursor: pointer;
+    margin: 2px 0;
   }
 
   .volume-slider::-webkit-slider-thumb {
@@ -528,6 +531,7 @@
     background: #333;
     border-radius: 50%;
     cursor: pointer;
+    opacity: 1;
   }
 
   .volume-slider::-moz-range-thumb {
@@ -537,6 +541,7 @@
     border-radius: 50%;
     cursor: pointer;
     border: none;
+    opacity: 1;
   }
 
   .volume-slider::-webkit-slider-runnable-track {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { activeDeleteConfirm } from '$lib/stores/deleteConfirmStore';
+  import { galleryActions, type GalleryImage } from '$lib/stores/galleryStore';
   import MediaEmbed from './MediaEmbed.svelte';
   import AudioPlayer from './AudioPlayer.svelte';
 
@@ -32,11 +33,30 @@
   // Derive showDeleteConfirm from the store value
   $: showDeleteConfirm = $activeDeleteConfirm === post.id;
 
+  // Filter images for gallery
+  $: postImages = post.media?.filter(media => media.type === 'image').map((media, index): GalleryImage => ({
+    id: media.id,
+    url: media.url,
+    caption: media.caption,
+    position: media.position
+  })) || [];
+
   // Toggle delete confirmation dialog
   function toggleDeleteConfirm() {
     // If this post's confirmation is already showing, hide it
     // Otherwise, show this post's confirmation (which automatically hides others)
     $activeDeleteConfirm = showDeleteConfirm ? null : post.id;
+  }
+
+  // Handle image click to open gallery
+  function handleImageClick(clickedMedia: any) {
+    if (postImages.length === 0) return;
+
+    // Find the index of the clicked image
+    const clickedIndex = postImages.findIndex(img => img.id === clickedMedia.id);
+    if (clickedIndex !== -1) {
+      galleryActions.openGallery(postImages, clickedIndex);
+    }
   }
 
   // Error state for deletion
@@ -200,12 +220,19 @@
       {#each post.media as media}
         <div class="media-item">
           {#if media.type === 'image'}
-            <img
-              data-src={media.url}
-              alt={media.caption || 'Image'}
-              loading="lazy"
-              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"
-            />
+            <button
+              class="image-button"
+              on:click={() => handleImageClick(media)}
+              aria-label="Open image in gallery"
+            >
+              <img
+                data-src={media.url}
+                alt={media.caption || 'Image'}
+                loading="lazy"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"
+                class="clickable-image"
+              />
+            </button>
           {:else if media.type === 'video'}
             <video
               controls
@@ -321,6 +348,33 @@
     background: #f6f6f6;
     display: block; /* Removes any bottom spacing */
   }
+
+  /* Image button styling */
+  .image-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    display: block;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+  }
+
+  .image-button:hover {
+    opacity: 0.9;
+  }
+
+  .image-button:active {
+    transform: scale(0.99);
+  }
+
+  .image-button:focus {
+    outline: 2px solid #007acc;
+    outline-offset: 2px;
+  }
+
+  /* Clickable image inherits from media-item img */
 
   /* Video styling - simple and clean */
   .media-item video.video-element {
