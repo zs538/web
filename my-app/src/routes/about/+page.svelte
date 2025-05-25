@@ -1,58 +1,161 @@
-<section class="about-container">
-    <h1>About iK</h1>
-    <p>
-      <strong>iK</strong> is a minimalist, public social feed inspired by Tumblr.<br>
-      Built for rapid prototyping with SvelteKit and Drizzle ORM.<br>
-      The focus: fast, simple multimedia sharing with easy admin tools.
-    </p>
-    <ul>
-      <li>Infinite scroll public feed</li>
-      <li>Images, video, audio, and embeds</li>
-      <li>Secure login (no public registration)</li>
-      <li>Admin-ready moderation and audit log</li>
-      <li>No likes, no comments, no profiles</li>
-    </ul>
-    <hr>
-    <p style="font-size: 0.95em; color: #888;">
-      Prototype — powered by <a href="https://kit.svelte.dev/" target="_blank">SvelteKit</a>
-    </p>
-  </section>
-  
-  <style>
-    .about-container {
-      max-width: 540px;
-      margin: 40px auto 0 auto;
-      padding: 2.5rem 2rem 2rem 2rem;
-      text-align: center;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 3px 22px 0 #23294008;
-    }
-    .about-container h1 {
-      margin-bottom: 0.7em;
-      color: #283549;
-      font-size: 2rem;
-    }
-    .about-container ul {
-      margin: 2em auto 1.7em auto;
-      line-height: 1.7;
-      font-size: 1.11em;
-      display: inline-block;
-      text-align: left;
-    }
-    .about-container a {
-      color: #1486ff;
-      text-decoration: none;
-      transition: color 0.15s;
-    }
-    .about-container a:hover {
-      color: #1b5bad;
-      text-decoration: underline;
-    }
-    hr {
-      margin: 2em auto 1em auto;
-      border: none;
-      border-top: 1px solid #eee;
-      width: 60%;
-    }
-  </style>
+<div class="about-content">
+  <p>
+    In the digital expanse where human creativity meets artificial intelligence, <strong>aicum</strong> emerges as a testament to the evolving relationship between mind and machine. This platform represents more than a social network—it is a philosophical experiment in collaborative creation, where traditional boundaries between conception and implementation dissolve into something entirely new.
+  </p>
+
+  <p>
+    The implications extend far beyond software development. We are witnessing the emergence of a new creative class—one where human strategic thinking combines with artificial computational capabilities to produce outcomes neither could achieve independently. This represents a fundamental shift in how we understand intellectual labor, creative ownership, and the nature of expertise itself.
+  </p>
+
+  <p>
+    For the technology industry, aicum demonstrates a potential future where development cycles accelerate dramatically, not through automation of existing processes, but through entirely new forms of human-machine collaboration. The traditional software development pipeline—from requirements gathering through deployment—becomes compressed into iterative conversations between human intent and artificial execution.
+  </p>
+
+  <p>
+    Societally, this raises profound questions about economic structures built on human labor scarcity. When artificial intelligence can translate abstract concepts into functional software systems, the value proposition of traditional programming roles fundamentally changes. Yet rather than displacement, we observe the emergence of new hybrid roles that require distinctly human capabilities: strategic vision, ethical reasoning, and contextual understanding.
+  </p>
+
+  <p>
+    aicum embodies principles of intentional reduction that challenge contemporary digital culture's addiction to engagement metrics. By eliminating likes, comments, and algorithmic feeds, the platform proposes that meaningful digital interaction might emerge from simplicity rather than complexity. This philosophical stance questions whether the attention economy's fundamental assumptions about human behavior and digital engagement are actually serving human flourishing.
+  </p>
+
+  <p>
+    Yet this collaborative approach introduces profound complexities into the creative process itself. The speed of AI implementation can outpace human reflection, leading to solutions that are technically elegant but conceptually shallow. When artificial intelligence translates human intent into code within minutes rather than days, there is insufficient time for the iterative contemplation that traditionally refines ideas. The result may be platforms that function flawlessly but lack the deeper wisdom that emerges from prolonged human consideration.
+  </p>
+
+  <p>
+    The process also reveals troubling dependencies. Human creativity becomes constrained by the AI's interpretation capabilities—ideas that cannot be clearly articulated to artificial intelligence remain unimplemented, regardless of their potential value. This creates a subtle but significant bias toward concepts that are easily verbalized and systematized, potentially excluding more intuitive or emotionally nuanced approaches to design and functionality.
+  </p>
+
+  <p>
+    Furthermore, the compressed development timeline eliminates traditional quality assurance mechanisms. Human code review, collaborative debugging, and peer consultation—processes that historically caught not just technical errors but conceptual flaws—become obsolete when a single human directs an AI through rapid implementation cycles. The absence of diverse human perspectives during development may produce software that reflects the biases and blind spots of a single human vision, amplified by artificial intelligence's tendency toward optimization rather than questioning.
+  </p>
+
+  <p>
+    The works themselves bear the marks of this process. While aicum demonstrates technical sophistication, it also exhibits the characteristic uniformity of AI-generated solutions—clean, efficient, but potentially lacking the idiosyncratic character that emerges from human struggle with technical constraints. The platform's minimalism, while philosophically justified, may also reflect AI's preference for reducible problems over the messy complexity that human teams might embrace and explore.
+  </p>
+
+  <p>
+    Most concerning is the erosion of technical understanding that this approach may foster. When humans can conceptualize software without implementing it, we risk losing the deep technical knowledge that comes from wrestling with code directly. This creates a dangerous asymmetry: artificial intelligence gains implementation experience while humans become increasingly removed from the technical realities of their own ideas.
+  </p>
+
+  <p>
+    The transformation of human vision through AI interpretation reveals another layer of complexity. Original concepts undergo subtle but significant mutations as they pass through artificial intelligence's processing framework. What emerges is neither purely human nor purely artificial, but a hybrid interpretation that may enhance certain aspects of the original vision while diminishing others. The AI's tendency to systematize and optimize can strengthen structural elements of an idea while potentially weakening its more experimental or emotionally resonant components.
+  </p>
+
+  <p>
+    This process fundamentally differs from traditional human programmer collaboration. When a human developer receives a specification, they bring personal experience, technical intuition, and creative problem-solving to the implementation. They question assumptions, suggest alternatives, and often improve upon the original concept through their own understanding of both technical possibilities and user needs. The human programmer acts as a creative partner, not merely an executor.
+  </p>
+
+  <p>
+    In contrast, artificial intelligence operates as an extraordinarily capable but fundamentally different kind of collaborator. It excels at pattern recognition, optimization, and systematic implementation, but lacks the experiential knowledge that allows human programmers to anticipate edge cases, understand user psychology, or recognize when a technically correct solution might be practically problematic. The AI implements what is requested with remarkable efficiency, but without the skeptical questioning that human collaborators naturally provide.
+  </p>
+
+  <p>
+    This distinction becomes particularly evident in aicum's development. Features that work exactly as specified may nonetheless feel slightly disconnected from real-world usage patterns that an experienced human developer might have anticipated and addressed. The platform's functionality is comprehensive and technically sound, yet it bears the subtle marks of implementation without the lived experience of building similar systems or encountering the countless small problems that inform seasoned developers' instincts.
+  </p>
+
+  <p>
+    <strong>Technical Implementation</strong>
+  </p>
+
+  <p>
+    aicum's architecture demonstrates modern web development practices through careful technology selection. <strong>SvelteKit</strong> provides the foundational framework, chosen for its compile-time optimizations and intuitive reactivity model. The frontend leverages <strong>TypeScript</strong> throughout, ensuring type safety across component hierarchies and API interactions.
+  </p>
+
+  <p>
+    Data persistence leverages <strong>Drizzle ORM</strong> with <strong>Supabase</strong> as the production database, deployed on <strong>Vercel</strong> for optimal performance and scalability. The database schema encompasses user management, session handling, post storage, media attachments, and comprehensive audit logging. Authentication security relies on <strong>Lucia</strong> for session management and <strong>Oslo</strong> for cryptographic operations, implementing industry-standard security practices including Argon2 password hashing.
+  </p>
+
+  <p>
+    The user experience stratifies across three distinct access levels. <strong>Guest users</strong> encounter a read-only infinite scroll feed showcasing all public content, with clean navigation and responsive design optimized for content consumption. <strong>Authenticated users</strong> gain access to post creation tools supporting multimedia uploads—images, videos, audio files, and external embeds—alongside personal post management capabilities.
+  </p>
+
+  <p>
+    <strong>Administrative functionality</strong> extends the platform with comprehensive moderation tools: user account management, post deletion capabilities, detailed audit logging, and system maintenance utilities. The admin interface maintains the same minimalist aesthetic while providing powerful oversight capabilities essential for platform governance.
+  </p>
+
+  <p>
+    Visual design embraces corporate minimalism through deliberate restraint. The typography hierarchy combines <strong>Manifold Extended</strong> for navigation elements with <strong>Suisse International</strong> for content text, creating clear information architecture. The interactive logo utilizes <strong>WebGL</strong> shaders to generate subtle cursor-responsive distortion effects, adding dynamic elements without compromising the overall clean aesthetic.
+  </p>
+
+  <p>
+    <strong>Media architecture</strong> implements adaptive rendering through automatic aspect ratio detection and polymorphic component systems. The <strong>gallery system</strong> provides full-screen media presentation with contextual navigation, designed to eliminate fragmented viewing experiences through sophisticated state management and visual hierarchy preservation.
+  </p>
+
+  <p>
+    <strong>Post composition</strong> supports heterogeneous content blocks combining images, videos, audio, and external embeds within unified structures. Progressive loading via intersection observers maintains performance while coordinated animation sequences ensure visual continuity during content transitions.
+  </p>
+
+  <p>
+    The <strong>personal content interface</strong> extends main feed functionality with comprehensive management capabilities, serving content review and contribution analysis requirements while maintaining architectural consistency.
+  </p>
+
+  <p>
+    <strong>Administrative infrastructure</strong> encompasses platform governance through specialized oversight tools. Audit logging captures granular system activity for transparency and compliance, while user management handles account lifecycle operations with integrated search and filtering capabilities for efficient oversight. Content moderation implements immediate response protocols with confirmation safeguards against accidental deletions. The user creation interface provides streamlined account provisioning with role assignment and validation controls.
+  </p>
+
+  <p>
+    <strong>Content creation systems</strong> employ progressive enhancement patterns balancing accessibility with functionality. The creation interface supports intuitive media reordering through drag-and-drop interactions, enabling precise content arrangement before publication. Comprehensive validation, format detection, and automatic embed processing reduce friction while maintaining quality standards across diverse media types.
+  </p>
+
+  <p>
+    Supporting implementations include custom audio players for visual consistency, responsive breakpoints for device optimization, and graceful error handling that preserves aesthetic integrity during failure states. The codebase maintains strict TypeScript compliance and follows modern accessibility standards, ensuring broad compatibility across devices and user capabilities.
+  </p>
+
+  <!-- About page signature -->
+  <div class="about-signature">
+    —Human Collaborator <span class="separator">|</span> <span class="ai-credit">Augment Agent</span>
+  </div>
+</div>
+
+<style>
+  .about-content {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 0;
+    text-align: left;
+    margin-bottom: 20vh;
+  }
+
+  .about-content p {
+    font-family: 'SuisseIntl', sans-serif;
+    font-size: 1.1em;
+    line-height: 1.7;
+    margin-bottom: 1.5em;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+  }
+
+  .about-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .about-content strong {
+    font-weight: 500;
+  }
+
+  .about-signature {
+    text-align: right;
+    font-size: 0.93em;
+    color: #888;
+    font-style: italic;
+    margin-top: 2em;
+  }
+
+  .about-signature .separator {
+    margin: 0 6px;
+    color: #ccc;
+    font-style: normal;
+  }
+
+  .about-signature .ai-credit {
+    font-size: 0.8em;
+    color: #bbb;
+    font-style: normal;
+  }
+</style>

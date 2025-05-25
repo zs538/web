@@ -32,10 +32,7 @@
   };
 
   // Import the embed utility
-  import { getEmbedInfo, isSupportedEmbedUrl, getSupportedEmbedDomains } from '$lib/utils/embed-utils';
-
-  // Get the list of supported embed domains for validation
-  const SUPPORTED_EMBED_DOMAINS = getSupportedEmbedDomains();
+  import { getEmbedInfo } from '$lib/utils/embed-utils';
 
   // Maximum file size (15MB)
   const MAX_FILE_SIZE = 15 * 1024 * 1024;
@@ -158,14 +155,17 @@
         return;
       }
 
-      // Store the embed info
+      // Store the embed info and reset input state
       mediaItems[index] = {
         type: 'embed',
         data: {
           url: embedInfo.embedUrl,
           domain: embedInfo.platform,
-          originalUrl: url
-        }
+          originalUrl: url,
+          timestamp: Date.now() // Add unique timestamp for each embed
+        },
+        showEmbedInput: false,
+        embedUrl: ''
       };
 
       // Add new empty row if we have less than 4 items
@@ -474,13 +474,13 @@
 
     <!-- Media Items -->
     <div class="media-container" bind:this={mediaContainer} role="list" aria-label="Media items">
-      {#each mediaItems as item, index (item.type === 'empty' ? `empty-${index}` : (item.data?.timestamp || item.data?.domain || `item-${index}`))}
+      {#each mediaItems as item, index (item.type === 'empty' ? `empty-${index}` : (item.data?.timestamp || item.data?.originalUrl || item.data?.domain || `item-${index}`))}
         <div
           class="media-row {item.type === 'empty' ? 'empty-row-container' : ''}"
           animate:flip={{ duration: 200, delay: 0, easing: quintOut }}
           transition:slide={{ duration: 150, easing: quintOut }}
           data-index={index}
-          data-key={item.type === 'empty' ? 'empty' : (item.data?.timestamp || item.data?.domain || index)}
+          data-key={item.type === 'empty' ? 'empty' : (item.data?.timestamp || item.data?.originalUrl || item.data?.domain || index)}
           role="listitem"
           aria-label="Media item"
         >
@@ -710,16 +710,6 @@
     border: 1px solid #eee;
   }
 
-  /* Styles for the dragged element */
-  :global(.dragging) {
-    opacity: 0.8;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    border: 1px dashed #3498db !important;
-    background-color: #f0f7fc !important;
-    position: relative;
-    z-index: 10;
-  }
-
   /* No drop target indicators - removed */
 
   /* Ghost element styles */
@@ -739,11 +729,7 @@
     z-index: 1;
   }
 
-  /* Disable animation for dragged element */
-  :global(.dragging) {
-    transition: none !important;
-    animation: none !important;
-  }
+
 
   .empty-row {
     display: flex;

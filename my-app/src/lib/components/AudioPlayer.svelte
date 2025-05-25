@@ -19,6 +19,7 @@
   let volumeTimeout: ReturnType<typeof setTimeout>;
   let animationFrame: number;
   let isHovering = false;
+  let isRepeating = false;
 
   // Format time in MM:SS format
   function formatTime(seconds: number): string {
@@ -67,6 +68,11 @@
         volumeSlider.style.setProperty('--volume-percent', `${volumeValue}%`);
       }
     }
+  }
+
+  // Toggle repeat
+  function toggleRepeat(): void {
+    isRepeating = !isRepeating;
   }
 
   // Handle volume change
@@ -166,9 +172,16 @@
   }
 
   function handleEnded(): void {
-    isPlaying = false;
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
+    if (isRepeating) {
+      audio.currentTime = 0;
+      audio.play().catch(error => {
+        console.error('Error repeating audio:', error);
+      });
+    } else {
+      isPlaying = false;
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
     }
   }
 
@@ -254,6 +267,18 @@
             aria-label="Seek"
           />
         </div>
+
+        <!-- Repeat button -->
+        <button
+          class="repeat-button"
+          class:active={isRepeating}
+          on:click={toggleRepeat}
+          aria-label={isRepeating ? 'Disable repeat' : 'Enable repeat'}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+            <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" fill="currentColor" />
+          </svg>
+        </button>
 
         <!-- Volume controls -->
         <div
@@ -462,6 +487,30 @@
     background: linear-gradient(to right, #333 var(--seek-percent, 0%), #dadce0 var(--seek-percent, 0%));
     height: 100%;
     border-radius: 0;
+  }
+
+  /* Repeat button styles */
+  .repeat-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #bbb;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    margin-right: 0px;
+  }
+
+  .repeat-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .repeat-button.active {
+    color: #333;
   }
 
   /* Volume control styles */

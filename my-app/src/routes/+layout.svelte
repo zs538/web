@@ -3,6 +3,7 @@
   import { navigate } from '$lib/utils/navigation';
   import { browser } from '$app/environment';
   import ImageGallery from '$lib/components/ImageGallery.svelte';
+  import InteractiveCanvas from '$lib/components/InteractiveCanvas.svelte';
 
   // Access the user data from page.data
   $: user = $page.data.user;
@@ -20,8 +21,15 @@
 <div class="container">
   <nav class="nav">
     <div class="logo-container">
-      <div class="logo" role="img" aria-label="aicum logo"></div>
+      <InteractiveCanvas
+        imageUrl="/hearthands.jpg"
+        width={150}
+        height={150}
+        intensity={0.8}
+        rippleSpeed={1.0}
+      />
     </div>
+    <div class="nav-separator"></div>
     <ul>
       <li><a href="/" on:click={e => handleNavigation(e, '/')}>aicum</a></li>
 
@@ -116,35 +124,38 @@
     width: 100%;
   }
   .nav {
-    width: 180px;
+    width: 190px;
     padding-top: 1rem;
     position: fixed;
     top: 0;
     right: 50%;
-    margin-right: 260px; /* Reduced spacing between nav and main content */
+    margin-right: 280px; /* Spacing between nav and main content */
     height: 100vh;
     overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .logo-container {
     display: flex;
     justify-content: center;
     margin-bottom: 0.5rem;
     padding: 0;
+    width: 180px;
   }
-  .logo {
-    width: 140px;
-    height: 140px;
-    background-image: url('/hearthands.jpg');
-    background-size: cover;
-    background-position: center;
-    border-radius: 4px;
-    pointer-events: none;
-    user-select: none;
+
+  .nav-separator {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.6) 10%, rgba(0, 0, 0, 0.6) 90%, transparent 100%);
+    margin: 0.5rem 0;
   }
+
   .nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
+    width: 180px;
   }
   .nav li {
     margin-bottom: 0.5em;
@@ -181,6 +192,21 @@
     position: absolute;
     left: 50%;
     margin-left: -250px; /* Half of the new width */
+  }
+  @media (max-width: 920px) {
+    .container {
+      justify-content: center;
+    }
+    .nav {
+      position: static;
+      margin-right: 30px;
+      height: auto;
+      overflow-y: visible;
+    }
+    .main-content {
+      position: static;
+      margin-left: 0;
+    }
   }
   @media (max-width: 700px) {
     .container {
