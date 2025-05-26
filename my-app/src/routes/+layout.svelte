@@ -59,6 +59,9 @@
 
       <li style="height: 1em"></li>
       <li><a href="/about" on:click={e => handleNavigation(e, '/about')}>about</a></li>
+      {#if user}
+        <li><a href="/settings" on:click={e => handleNavigation(e, '/settings')}>settings</a></li>
+      {/if}
     </ul>
   </nav>
   <main class="main-content">

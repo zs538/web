@@ -123,12 +123,16 @@
     font-size: 1.1em;
     line-height: 1.7;
     margin-bottom: 1.5em;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-    hyphens: auto;
-    -webkit-hyphens: auto;
-    -ms-hyphens: auto;
+    /* Conservative word wrapping - only break at natural word boundaries */
+    overflow-wrap: normal;
+    word-wrap: normal;
+    word-break: normal;
+    /* Disable hyphenation completely to prevent word splitting */
+    hyphens: none;
+    -webkit-hyphens: none;
+    -ms-hyphens: none;
+    /* Allow text to wrap naturally at spaces */
+    white-space: normal;
   }
 
   .about-content p:last-child {

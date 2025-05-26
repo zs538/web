@@ -987,7 +987,7 @@
   }
 
   th, td {
-    padding: 6px 4px;
+    padding: 4px 4px;
     text-align: left;
     border-bottom: 1px solid #ddd;
     font-size: 12px;
@@ -1034,27 +1034,38 @@
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
+    padding: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     margin: 0 auto;
+    border-radius: 0;
+    transition: all 0.15s ease;
+  }
+
+  .filter-toggle:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .filter-toggle:active {
+    background-color: rgba(0, 0, 0, 0.1);
   }
 
   .filter-toggle.active {
     color: #3498db;
   }
 
-  .filter-icon {
-    width: 16px;
-    height: 16px;
-    opacity: 0.7;
+  .filter-toggle.active .filter-icon {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(190deg) brightness(118%) contrast(119%);
   }
 
-  .filter-toggle.active .filter-icon {
-    opacity: 1;
+  .filter-icon {
+    width: 14px;
+    height: 14px;
+    display: block;
+    margin-top: 2px;
   }
 
   /* Details toggle button */
