@@ -1,6 +1,6 @@
 <div class="about-content">
   <p>
-    In the digital expanse where human creativity meets artificial intelligence, <strong>aicum</strong> emerges as a testament to the evolving relationship between mind and machine. This platform represents more than a social network—it is a philosophical experiment in collaborative creation, where traditional boundaries between conception and implementation dissolve into something entirely new.
+    In the digital expanse where human creativity meets artificial intelligence, <strong>aicum</strong> emerges as a testament to the evolution of creative methodologies and technological development itself—where AI serves as the implementing force behind human conceptual direction. This platform represents more than a social network—it is a philosophical experiment in collaborative creation, challenge to conventional notions of creative authorship in software development, and demonstration of emerging paradigms that reshape the fundamental processes of making and production.
   </p>
 
   <p>
@@ -13,10 +13,6 @@
 
   <p>
     Societally, this raises profound questions about economic structures built on human labor scarcity. When artificial intelligence can translate abstract concepts into functional software systems, the value proposition of traditional programming roles fundamentally changes. Yet rather than displacement, we observe the emergence of new hybrid roles that require distinctly human capabilities: strategic vision, ethical reasoning, and contextual understanding.
-  </p>
-
-  <p>
-    aicum embodies principles of intentional reduction that challenge contemporary digital culture's addiction to engagement metrics. By eliminating likes, comments, and algorithmic feeds, the platform proposes that meaningful digital interaction might emerge from simplicity rather than complexity. This philosophical stance questions whether the attention economy's fundamental assumptions about human behavior and digital engagement are actually serving human flourishing.
   </p>
 
   <p>
@@ -103,6 +99,10 @@
     Supporting implementations include custom audio players for visual consistency, responsive breakpoints for device optimization, and graceful error handling that preserves aesthetic integrity during failure states. The codebase maintains strict TypeScript compliance and follows modern accessibility standards, ensuring broad compatibility across devices and user capabilities.
   </p>
 
+  <p>
+    aicum embodies principles of intentional reduction that challenge contemporary digital culture's addiction to engagement metrics. By eliminating likes, comments, and algorithmic feeds, the platform rejects the commodification of human attention and the artificial scarcity of validation that drives compulsive usage patterns. In this environment, content creation becomes an exercise in pure curation—users must develop internal criteria for what merits sharing when external validation mechanisms disappear. Without metrics to optimize for, the act of posting shifts from engagement-driven strategy to personal editorial judgment. The absence of engagement mechanics creates space for contemplative consumption rather than reactive participation, fundamentally questioning whether the attention economy's extraction-based model serves genuine human connection or merely simulates it.
+  </p>
+
   <!-- About page signature -->
   <div class="about-signature">
     —Human Collaborator <span class="separator">|</span> <span class="ai-credit">Augment Agent</span>
@@ -115,7 +115,7 @@
     margin: 0 auto;
     padding: 0;
     text-align: left;
-    margin-bottom: 20vh;
+    margin-bottom: 5vh;
   }
 
   .about-content p {
