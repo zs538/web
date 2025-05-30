@@ -570,7 +570,7 @@
                   aria-label="View log details"
                   title="View log details"
                 >
-                  <img src="/three-dots-icon.svg" alt="Details" class="three-dots-icon" />
+                  <img src="/question-mark-icon.svg" alt="Help" class="question-mark-icon" />
                 </button>
               </td>
             </tr>
@@ -1093,7 +1093,7 @@
     background-color: rgba(0, 0, 0, 0.1);
   }
 
-  .three-dots-icon {
+  .question-mark-icon {
     width: 14px;
     height: 14px;
     display: block;

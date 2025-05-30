@@ -1,6 +1,6 @@
 @echo off
 REM Set path to portable Node.js
-SET NODE_PATH=G:\nodejs\node-v22.15.1-win-x64
+SET NODE_PATH=G:\nodejs\node-v22.16.0-win-x64
 SET PATH=%NODE_PATH%;%PATH%
 
 REM Make sure node is also in the PATH

@@ -508,7 +508,11 @@
               </button>
               <span class="separator">|</span>
               <button type="button" class="embed-btn" on:click={() => {
-                mediaItems[index] = { ...mediaItems[index], showEmbedInput: true };
+                mediaItems[index] = {
+                  ...mediaItems[index],
+                  showEmbedInput: !mediaItems[index].showEmbedInput,
+                  embedUrl: mediaItems[index].showEmbedInput ? '' : mediaItems[index].embedUrl
+                };
                 mediaItems = [...mediaItems]; // Trigger reactivity
               }}>
                 Embed
@@ -744,10 +748,16 @@
     cursor: pointer;
     padding: 0.5rem;
     font-family: inherit;
+    transition: color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .upload-btn:hover, .embed-btn:hover {
     color: #000;
+  }
+
+  .upload-btn:active, .embed-btn:active {
+    color: #333;
   }
 
   .separator {
@@ -765,7 +775,17 @@
   .embed-input input {
     flex: 1;
     padding: 0.5rem;
-    border: 1px solid #ddd;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+    font-family: 'SuisseIntl', sans-serif;
+  }
+
+  .embed-input input:focus {
+    outline: none;
+    border: 1px solid #3498db;
+    background-color: #ffffff;
   }
 
   .embed-confirm-btn {
@@ -774,7 +794,20 @@
     border: 1px solid #ddd;
     border-left: none;
     cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  .embed-confirm-btn:hover {
+    background: #e0e0e0;
+  }
+
+  .embed-confirm-btn:active {
+    background: #d0d0d0;
+  }
+
+
 
   .media-item-row {
     display: flex;
