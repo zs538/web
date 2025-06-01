@@ -49,7 +49,9 @@
             <a href="/logout" on:click|preventDefault={toggleLogoutConfirm}>logout</a>
           {:else}
             <a href="/" on:click|preventDefault={toggleLogoutConfirm}>cancel</a>
-            <span class="separator"></span>
+            <svg class="separator" xmlns="http://www.w3.org/2000/svg" width="1" height="16" viewBox="0 0 1 16" fill="currentColor" aria-hidden="true">
+              <line x1="0.5" y1="0" x2="0.5" y2="16" stroke="currentColor" stroke-width="0.5"/>
+            </svg>
             <a href="/logout">confirm</a>
           {/if}
         </li>
@@ -179,14 +181,12 @@
   }
 
   .nav .separator {
-    display: inline-block;
-    width: 0.5px;
-    height: 0.7em;
+    color: #999;
     margin: 0 3px;
-    background-color: #ddd;
     vertical-align: middle;
     position: relative;
     top: -0.05em;
+    flex-shrink: 0;
   }
   .main-content {
     width: 500px; /* Increased from 400px to 500px (added 100px) */

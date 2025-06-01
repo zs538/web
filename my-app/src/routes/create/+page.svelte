@@ -13,6 +13,7 @@
     name?: string;
     url?: string;
     domain?: string;
+    title?: string; // Title for embeds (fetched from metadata)
     timestamp?: number; // Add timestamp for uniqueness
     originalUrl?: string; // Store the original URL for embeds
   };
@@ -32,7 +33,7 @@
   };
 
   // Import the embed utility
-  import { getEmbedInfo } from '$lib/utils/embed-utils';
+  import { getEmbedInfo, fetchEmbedMetadata } from '$lib/utils/embed-utils';
 
   // Maximum file size (15MB)
   const MAX_FILE_SIZE = 15 * 1024 * 1024;
@@ -140,7 +141,7 @@
   }
 
   // Handle embed
-  function handleEmbed(index: number, url?: string): void {
+  async function handleEmbed(index: number, url?: string): Promise<void> {
     if (!url) return;
 
     try {
@@ -155,13 +156,17 @@
         return;
       }
 
+      // Fetch metadata for the embed
+      const embedInfoWithMetadata = await fetchEmbedMetadata(embedInfo, url);
+
       // Store the embed info and reset input state
       mediaItems[index] = {
         type: 'embed',
         data: {
-          url: embedInfo.embedUrl,
-          domain: embedInfo.platform,
+          url: embedInfoWithMetadata.embedUrl,
+          domain: embedInfoWithMetadata.platform,
           originalUrl: url,
+          title: embedInfoWithMetadata.title,
           timestamp: Date.now() // Add unique timestamp for each embed
         },
         showEmbedInput: false,
@@ -506,7 +511,9 @@
               >
                 Upload
               </button>
-              <span class="separator">|</span>
+              <svg class="separator" xmlns="http://www.w3.org/2000/svg" width="1" height="20" viewBox="0 0 1 20" fill="currentColor" aria-hidden="true">
+                <line x1="0.5" y1="0" x2="0.5" y2="20" stroke="currentColor" stroke-width="0.5"/>
+              </svg>
               <button type="button" class="embed-btn" on:click={() => {
                 mediaItems[index] = {
                   ...mediaItems[index],
@@ -545,7 +552,14 @@
                 aria-label="Drag to reorder"
                 tabindex="0"
               >
-                ⠿
+                <svg class="drag-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor" aria-hidden="true">
+                  <rect x="8" y="5" width="3" height="3"/>
+                  <rect x="13" y="5" width="3" height="3"/>
+                  <rect x="8" y="10" width="3" height="3"/>
+                  <rect x="13" y="10" width="3" height="3"/>
+                  <rect x="8" y="15" width="3" height="3"/>
+                  <rect x="13" y="15" width="3" height="3"/>
+                </svg>
               </div>
 
               <!-- Preview -->
@@ -553,31 +567,33 @@
                 {#if item.type === 'image' && item.data}
                   <div class="image-preview">
                     <img src={item.data.preview} alt={item.data.name || 'Image'} />
-                    <span class="filename">{item.data.name || 'Image file'}</span>
+                    <span class="filename" title={item.data.name || 'Image file'}>{item.data.name || 'Image file'}</span>
                   </div>
                 {:else if item.type === 'video' && item.data}
                   <div class="video-preview">
-                    <span class="play-icon">▶</span>
-                    <span class="filename">{item.data.name || 'Video file'}</span>
+                    <svg class="play-icon video-file-icon" xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor" aria-hidden="true">
+                      <path d="m160-800 80 160h120l-80-160h80l80 160h120l-80-160h80l80 160h120l-80-160h120q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800Zm0 240v320h640v-320H160Zm0 0v320-320Z"/>
+                    </svg>
+                    <span class="filename" title={item.data.name || 'Video file'}>{item.data.name || 'Video file'}</span>
                   </div>
                 {:else if item.type === 'audio' && item.data}
                   <div class="audio-preview">
-                    <span class="audio-icon">♪</span>
-                    <span class="filename">{item.data.name || 'Audio file'}</span>
+                    <svg class="audio-icon audio-file-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor" />
+                    </svg>
+                    <span class="filename" title={item.data.name || 'Audio file'}>{item.data.name || 'Audio file'}</span>
                   </div>
                 {:else if item.type === 'embed' && item.data}
                   <div class="embed-preview">
-                    {#if item.data.domain === 'youtube' || item.data.domain === 'vimeo'}
-                      <span class="embed-icon video-embed-icon">▶</span>
-                    {:else if item.data.domain === 'spotify' || item.data.domain === 'soundcloud'}
-                      <span class="embed-icon audio-embed-icon">♪</span>
-                    {:else}
-                      <span class="embed-icon">🔗</span>
-                    {/if}
-                    <span class="embed-url">{item.data.domain}</span>
-                    {#if item.data.originalUrl}
-                      <span class="embed-original-url">{item.data.originalUrl}</span>
-                    {/if}
+                    <svg class="embed-icon web-embed-icon" xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor" aria-hidden="true">
+                      <path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-155.5t86-127Q252-817 325-848.5T480-880q83 0 155.5 31.5t127 86q54.5 54.5 86 127T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480-80Zm0-82q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z"/>
+                    </svg>
+                    <div class="embed-info">
+                      <span class="embed-title" title={item.data.title || item.data.domain}>{item.data.title || item.data.domain}</span>
+                      {#if item.data.title && item.data.domain}
+                        <span class="embed-platform">({item.data.domain})</span>
+                      {/if}
+                    </div>
                   </div>
                 {/if}
               </div>
@@ -589,7 +605,10 @@
                 on:click={() => removeItem(index)}
                 aria-label="Remove item"
               >
-                ✕
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+                  <line x1="14.5" y1="3.5" x2="3.5" y2="14.5"></line>
+                  <line x1="3.5" y1="3.5" x2="14.5" y2="14.5"></line>
+                </svg>
               </button>
             </div>
           {/if}
@@ -607,7 +626,8 @@
 
       {#if item.type === 'embed' && item.data}
         <input type="hidden" name="mediaUrl_{i}" value={item.data.url || ''} />
-        <input type="hidden" name="mediaCaption_{i}" value={item.data.domain || ''} />
+        <input type="hidden" name="mediaCaption_{i}" value={item.data.title || item.data.domain || ''} />
+        <input type="hidden" name="mediaPlatform_{i}" value={item.data.domain || ''} />
       {:else if item.data}
         <!-- For uploaded files, we'll need to handle this server-side -->
         <input type="hidden" name="mediaUrl_{i}" value={item.data.preview || ''} />
@@ -644,6 +664,10 @@
     width: 100%;
     max-width: 500px;
     padding: 0;
+  }
+
+  form {
+    margin-bottom: 20px;
   }
 
   h1 {
@@ -761,8 +785,9 @@
   }
 
   .separator {
-    color: #ccc;
+    color: #999;
     margin: 0 0.5rem;
+    flex-shrink: 0;
   }
 
   .embed-input {
@@ -780,6 +805,7 @@
     box-sizing: border-box;
     transition: all 0.15s ease;
     font-family: 'SuisseIntl', sans-serif;
+    font-weight: 300;
   }
 
   .embed-input input:focus {
@@ -817,12 +843,19 @@
   .drag-handle {
     cursor: grab;
     padding: 0 0.75rem;
-    color: #aaa;
-    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .drag-handle:active {
     cursor: grabbing;
+  }
+
+  .drag-icon {
+    width: 24px;
+    height: 24px;
+    color: #999;
   }
 
   .media-preview {
@@ -848,23 +881,37 @@
     font-size: 1.2rem;
   }
 
-  .video-embed-icon {
-    color: #ff0000; /* YouTube red */
+  .audio-file-icon {
+    color: #656565;
   }
 
-  .audio-embed-icon {
-    color: #1DB954; /* Spotify green */
+  .video-file-icon {
+    color: #656565;
   }
 
-  .embed-original-url {
-    display: block;
-    font-size: 0.75rem;
-    color: #999;
-    margin-top: 0.25rem;
+  .web-embed-icon {
+    color: #656565;
+  }
+
+  .embed-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .embed-title {
+    font-size: 0.9rem;
+    color: #555;
+    word-break: break-word;
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .embed-platform {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 0.1rem;
   }
 
   .filename {
@@ -883,11 +930,19 @@
     color: #999;
     cursor: pointer;
     padding: 0.5rem;
-    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
   }
 
   .remove-btn:hover {
     color: #e74c3c;
+  }
+
+  .remove-btn svg {
+    width: 18px;
+    height: 18px;
   }
 
   .submit-container {

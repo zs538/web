@@ -550,8 +550,11 @@
                 class:active={activeFilterCount > 0}
                 on:click|stopPropagation={toggleFilterMenu}
                 type="button"
+                aria-label="Filter logs"
               >
-                <img src="/funnel-icon.svg" alt="Filter" class="filter-icon" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
+                  <polygon points="1,1 15,1 9,8 9,14 7,15 7,8 1,1"></polygon>
+                </svg>
               </button>
             </th>
           </tr>
@@ -570,7 +573,9 @@
                   aria-label="View log details"
                   title="View log details"
                 >
-                  <img src="/question-mark-icon.svg" alt="Help" class="question-mark-icon" />
+                  <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" class="question-mark-icon">
+                    <path d="M478-240q21 0 35.5-14.5T528-290q0-21-14.5-35.5T478-340q-21 0-35.5 14.5T428-290q0 21 14.5 35.5T478-240Zm-36-154h74q0-33 7.5-52t42.5-52q26-26 41-49.5t15-56.5q0-56-41-86t-97-30q-57 0-92.5 30T342-618l66 26q5-18 22.5-39t53.5-21q32 0 48 17.5t16 38.5q0 20-12 37.5T506-526q-44 39-54 59t-10 73Zm38 314q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/>
+                  </svg>
                 </button>
               </td>
             </tr>
@@ -1057,15 +1062,12 @@
     color: #3498db;
   }
 
-  .filter-toggle.active .filter-icon {
-    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(190deg) brightness(118%) contrast(119%);
-  }
-
   .filter-icon {
     width: 14px;
     height: 14px;
     display: block;
     margin-top: 2px;
+    color: #656565;
   }
 
   /* Details toggle button */
@@ -1080,12 +1082,10 @@
     width: 24px;
     height: 24px;
     margin: 0 auto;
-    opacity: 0.7;
     transition: all 0.15s ease;
   }
 
   .details-toggle:hover {
-    opacity: 1;
     background: rgba(0, 0, 0, 0.05);
   }
 
@@ -1094,9 +1094,10 @@
   }
 
   .question-mark-icon {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     display: block;
+    color: #656565;
   }
 
   /* Details dialog styles */

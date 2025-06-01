@@ -501,8 +501,11 @@
                 class:active={activeFilterCount > 0}
                 on:click|stopPropagation={toggleFilterMenu}
                 type="button"
+                aria-label="Filter users"
               >
-                <img src="/funnel-icon.svg" alt="Filter" class="filter-icon" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
+                  <polygon points="1,1 15,1 9,8 9,14 7,15 7,8 1,1"></polygon>
+                </svg>
               </button>
             </th>
           </tr>
@@ -516,8 +519,12 @@
               <td>{new Date(user.createdAt).toLocaleDateString()}</td>
               <td class="actions">
                 <div class="dropdown">
-                  <button class="dropdown-toggle" on:click|stopPropagation={(event) => toggleDropdown(user.id, event)}>
-                    <img src="/three-dots-icon.svg" alt="Actions" class="three-dots-icon" />
+                  <button class="dropdown-toggle" on:click|stopPropagation={(event) => toggleDropdown(user.id, event)} aria-label="User actions">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 16 16" fill="currentColor" class="three-dots-icon">
+                      <circle cx="8" cy="3" r="1.6" />
+                      <circle cx="8" cy="8" r="1.6" />
+                      <circle cx="8" cy="13" r="1.6" />
+                    </svg>
                   </button>
 
                   {#if $activeDropdown === user.id}
@@ -830,15 +837,12 @@
     color: #3498db;
   }
 
-  .filter-toggle.active .filter-icon {
-    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(190deg) brightness(118%) contrast(119%);
-  }
-
   .filter-icon {
     width: 16px;
     height: 16px;
     display: block;
     margin-top: 2px;
+    color: #656565;
   }
 
   /* Filter dialog */
@@ -1097,6 +1101,7 @@
     width: 18px;
     height: 18px;
     display: block;
+    color: #656565;
     opacity: 0.8;
     transition: opacity 0.15s ease;
   }

@@ -445,7 +445,6 @@
   .delete-container {
     display: inline-block;
     margin-left: 10px;
-    vertical-align: middle;
   }
 
   .delete-button {

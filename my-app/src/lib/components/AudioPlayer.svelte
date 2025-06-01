@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { activeAudioPlayer } from '$lib/stores/audioPlayerStore';
 
   // Props
   export let src: string;
@@ -35,6 +36,18 @@
     if (isPlaying) {
       audio.pause();
     } else {
+      // Before playing this audio, pause any currently playing audio
+      activeAudioPlayer.update(currentActive => {
+        if (currentActive && currentActive !== src) {
+          // Find and pause the currently active audio player
+          const activeAudio = document.querySelector(`audio[src="${currentActive}"]`) as HTMLAudioElement;
+          if (activeAudio && !activeAudio.paused) {
+            activeAudio.pause();
+          }
+        }
+        return src; // Set this audio as the new active player
+      });
+
       audio.play().catch(error => {
         console.error('Error playing audio:', error);
       });
@@ -134,6 +147,10 @@
     if (volumeTimeout) {
       clearTimeout(volumeTimeout);
     }
+    // Clear this audio from active player if it was the active one
+    activeAudioPlayer.update(currentActive => {
+      return currentActive === src ? null : currentActive;
+    });
   });
 
   // Event handlers for audio element
@@ -161,11 +178,17 @@
 
   function handlePlay(): void {
     isPlaying = true;
+    // Set this audio as the active player when it starts playing
+    activeAudioPlayer.set(src);
     updateTimeDisplay();
   }
 
   function handlePause(): void {
     isPlaying = false;
+    // Clear this audio from active player if it was the active one
+    activeAudioPlayer.update(currentActive => {
+      return currentActive === src ? null : currentActive;
+    });
     if (animationFrame) {
       cancelAnimationFrame(animationFrame);
     }
@@ -179,6 +202,10 @@
       });
     } else {
       isPlaying = false;
+      // Clear this audio from active player when it ends
+      activeAudioPlayer.update(currentActive => {
+        return currentActive === src ? null : currentActive;
+      });
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
       }
