@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { fade, slide } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
 
@@ -28,6 +29,27 @@
     message = '';
     messageType = '';
   }
+
+  // Handle click outside to close popup
+  function handleClickOutside(event: MouseEvent) {
+    if (event.target instanceof Element) {
+      // Close password change popup if open and click is outside the dialog
+      if (showPasswordChangePopup && event.target.classList.contains('confirm-dialog-backdrop')) {
+        closePasswordChangePopup();
+      }
+    }
+  }
+
+  // Initialize click handler
+  onMount(() => {
+    // Add global click handler to close popups
+    document.addEventListener('click', handleClickOutside);
+
+    // Clean up event listener on component destroy
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  });
 
   async function handlePasswordChange() {
     // Reset message
