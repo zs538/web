@@ -156,7 +156,7 @@
         on:click={generatePassword}
         disabled={loading}
       >
-        Generate
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#999"><path d="M640-260q25 0 42.5-17.5T700-320q0-25-17.5-42.5T640-380q-25 0-42.5 17.5T580-320q0 25 17.5 42.5T640-260ZM480-420q25 0 42.5-17.5T540-480q0-25-17.5-42.5T480-540q-25 0-42.5 17.5T420-480q0 25 17.5 42.5T480-420ZM320-580q25 0 42.5-17.5T380-640q0-25-17.5-42.5T320-700q-25 0-42.5 17.5T260-640q0 25 17.5 42.5T320-580ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
       </button>
     </div>
   </div>
@@ -228,7 +228,15 @@
     font-family: 'SuisseIntl', sans-serif;
     font-weight: 300; /* Use the light version of Suisse font */
     color: #333;
+    background-color: #ffffff; /* Set white background */
+    height: 40px;
+    box-sizing: border-box;
     transition: all 0.15s ease;
+  }
+
+  select option {
+    background-color: #ffffff; /* Set white background for options */
+    color: #333;
   }
 
   input:focus, select:focus {
@@ -240,30 +248,48 @@
 
   .password-input-container {
     display: flex;
-    gap: 10px;
+    gap: 0;
   }
 
   .password-input-container input {
     flex: 1;
+    border-right: none;
+  }
+
+  .password-input-container input:focus {
+    outline: none;
+    border: 1px solid #3498db;
+    border-right: 1px solid #3498db;
+    background-color: #ffffff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   }
 
   .generate-btn {
-    padding: 0 12px;
-    background: transparent;
+    padding: 0;
+    background: #ffffff;
     border: 1px solid #ccc;
+    border-left: none;
     cursor: pointer;
     font-size: 14px;
     font-family: 'ManifoldExtended', sans-serif;
     height: 40px;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.15s ease;
   }
 
   .generate-btn:hover {
     background: rgba(0, 0, 0, 0.05);
+    border: 1px solid #bbb;
+    border-left: none;
   }
 
   .generate-btn:active {
     background-color: rgba(0, 0, 0, 0.1);
+    border: 1px solid #aaa;
+    border-left: none;
   }
 
   .error-message {

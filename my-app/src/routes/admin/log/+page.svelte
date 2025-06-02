@@ -1429,8 +1429,14 @@
     font-family: 'SuisseIntl', sans-serif;
     font-weight: 300;
     color: #333;
+    background-color: #ffffff; /* Set white background */
     transition: all 0.15s ease;
     box-sizing: border-box; /* Ensure padding is included in width */
+  }
+
+  .filter-select option {
+    background-color: #ffffff; /* Set white background for options */
+    color: #333;
   }
 
   .filter-select:focus, .filter-input:focus {

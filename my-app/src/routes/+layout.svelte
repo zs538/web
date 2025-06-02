@@ -120,6 +120,16 @@
     font-family: 'SuisseIntl', sans-serif;
   }
 
+  /* Global select element styling */
+  :global(select) {
+    background-color: #ffffff;
+  }
+
+  :global(select option) {
+    background-color: #ffffff;
+    color: #333;
+  }
+
   .container {
     display: flex;
     justify-content: center;
