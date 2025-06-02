@@ -950,13 +950,14 @@
   }
 
   .submit-btn {
-    padding: 0.75rem 0; /* Remove horizontal padding since we're using fixed width */
+    padding: 0; /* Remove padding since we're using fixed height */
     background: #333;
     color: white;
     border: none;
     cursor: pointer;
     font-family: inherit;
     width: 110px; /* Reduced fixed width */
+    height: 40px; /* Fixed height */
     text-align: center; /* Ensure text is centered */
     transition: background-color 0.15s ease; /* Smooth transition for hover state */
   }

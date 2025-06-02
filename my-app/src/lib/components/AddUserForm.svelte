@@ -248,12 +248,13 @@
   }
 
   .generate-btn {
-    padding: 8px 12px;
+    padding: 0 12px;
     background: transparent;
     border: 1px solid #ccc;
     cursor: pointer;
     font-size: 14px;
     font-family: 'ManifoldExtended', sans-serif;
+    height: 40px;
     transition: all 0.15s ease;
   }
 
@@ -343,11 +344,12 @@
   }
 
   .clear-btn {
-    padding: 8px 16px;
+    padding: 0 16px;
     background: transparent;
     border: 1px solid #ddd;
     cursor: pointer;
     font-family: 'ManifoldExtended', sans-serif;
+    height: 40px;
     transition: all 0.15s ease;
   }
 
@@ -360,12 +362,13 @@
   }
 
   .submit-btn {
-    padding: 8px 16px;
+    padding: 0 16px;
     background: transparent;
     color: #333;
     border: 1px solid #333;
     cursor: pointer;
     font-family: 'ManifoldExtended', sans-serif;
+    height: 40px;
     transition: all 0.15s ease;
   }
 

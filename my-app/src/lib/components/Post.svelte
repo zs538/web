@@ -508,11 +508,12 @@
     color: #888;
     font-size: 0.7em;
     font-weight: 400;
-    padding: 1px 8px;
+    padding: 0 8px;
     margin-top: 1px;
     border: 1px solid #ccc;
     border-radius: 2px;
     cursor: pointer;
+    height: 40px;
     transition: all 0.2s ease;
   }
 

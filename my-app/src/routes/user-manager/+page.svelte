@@ -698,13 +698,14 @@
 
   .tab-button {
     flex: 1;
-    padding: 8px 0;
+    padding: 0;
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
     font-family: 'ManifoldExtended', sans-serif;
     font-size: 13px;
+    height: 40px;
     transition: all 0.15s ease;
     color: #888;
     text-align: center;
@@ -868,7 +869,7 @@
   .filter-dialog {
     background: white;
     padding: 20px;
-    border-radius: 0;
+    border-radius: 2px;
     max-width: 400px;
     width: 100%;
     font-family: 'SuisseIntl', sans-serif;
@@ -913,41 +914,34 @@
 
   .filter-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 10px;
     margin-top: 20px;
   }
 
   .reset-btn, .close-btn {
-    padding: 8px 12px;
+    padding: 0 0.5rem;
     background: transparent;
-    border: 1px solid #ddd;
-    border-radius: 3px;
+    border: 1px solid #333;
+    border-radius: 0;
+    color: #333;
     cursor: pointer;
     font-family: 'ManifoldExtended', sans-serif;
-    font-size: 13px;
+    width: 130px;
+    height: 40px;
+    text-align: center;
     transition: all 0.15s ease;
   }
 
   .reset-btn:hover, .close-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(51, 51, 51, 0.1);
   }
 
-  .close-btn:active {
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-
-  .reset-btn {
-    color: #f44336;
-    border-color: #f44336;
-  }
-
-  .reset-btn:hover {
-    background: rgba(244, 67, 54, 0.1);
-  }
-
-  .reset-btn:active {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: #d32f2f; /* Darker red when clicked */
+  .reset-btn:disabled, .close-btn:disabled {
+    background: transparent;
+    border-color: #999;
+    color: #999;
+    cursor: not-allowed;
   }
 
 
