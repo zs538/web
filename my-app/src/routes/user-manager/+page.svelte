@@ -1179,7 +1179,7 @@
   .confirm-dialog {
     background: white;
     padding: 20px;
-    border-radius: 0;
+    border-radius: 2px;
     max-width: 400px;
     width: 100%;
     font-family: 'SuisseIntl', sans-serif;
@@ -1207,29 +1207,38 @@
   }
 
   .cancel-btn {
-    padding: 8px 16px;
+    padding: 0 0.5rem;
     background: transparent;
-    border: 1px solid #ddd;
+    border: 1px solid #333;
+    border-radius: 0;
+    color: #333;
     cursor: pointer;
     font-family: 'ManifoldExtended', sans-serif;
+    width: 130px;
+    height: 40px;
+    text-align: center;
     transition: all 0.15s ease;
   }
 
   .cancel-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(51, 51, 51, 0.1);
   }
 
   .cancel-btn:active {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(51, 51, 51, 0.1);
   }
 
   .confirm-btn {
-    padding: 8px 16px;
+    padding: 0 0.5rem;
     background: transparent;
     color: #f44336;
     border: 1px solid #f44336;
+    border-radius: 0;
     cursor: pointer;
     font-family: 'ManifoldExtended', sans-serif;
+    width: 130px;
+    height: 40px;
+    text-align: center;
     transition: all 0.15s ease;
   }
 

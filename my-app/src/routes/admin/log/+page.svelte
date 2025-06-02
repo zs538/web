@@ -1159,10 +1159,11 @@
   .details-dialog {
     background: white;
     padding: 20px;
-    border-radius: 0;
+    border-radius: 2px;
     max-width: 440px; /* Total width including padding */
     width: 100%;
     box-sizing: border-box; /* Ensure padding is included in width calculation */
+    font-family: 'SuisseIntl', sans-serif;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     will-change: transform;
     transform-origin: top center;
@@ -1392,9 +1393,10 @@
   .filter-dialog {
     background: white;
     padding: 20px;
-    border-radius: 0;
+    border-radius: 2px;
     max-width: 400px;
     width: 100%;
+    font-family: 'SuisseIntl', sans-serif;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     will-change: transform;
     transform-origin: top center;
@@ -1448,41 +1450,34 @@
 
   .filter-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 10px;
     margin-top: 20px;
   }
 
   .reset-btn, .close-btn {
-    padding: 8px 12px;
+    padding: 0 0.5rem;
     background: transparent;
-    border: 1px solid #ddd;
+    border: 1px solid #333;
     border-radius: 0;
+    color: #333;
     cursor: pointer;
     font-family: 'ManifoldExtended', sans-serif;
-    font-size: 13px;
+    width: 130px;
+    height: 40px;
+    text-align: center;
     transition: all 0.15s ease;
   }
 
   .reset-btn:hover, .close-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(51, 51, 51, 0.1);
   }
 
-  .reset-btn {
-    color: #f44336;
-    border-color: #f44336;
-  }
-
-  .reset-btn:hover {
-    background: rgba(244, 67, 54, 0.1);
-  }
-
-  .close-btn {
-    color: #3498db;
-    border-color: #3498db;
-  }
-
-  .close-btn:hover {
-    background: rgba(52, 152, 219, 0.1);
+  .reset-btn:disabled, .close-btn:disabled {
+    background: transparent;
+    border-color: #999;
+    color: #999;
+    cursor: not-allowed;
   }
 
   /* Message styles */
