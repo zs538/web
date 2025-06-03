@@ -284,6 +284,31 @@
     }
   }
 
+  // Throttle scroll updates for better performance
+  let scrollUpdateFrame: number | null = null;
+
+  // Update dropdown position when scrolling
+  function handleScroll() {
+    if ($activeDropdown && !scrollUpdateFrame) {
+      scrollUpdateFrame = requestAnimationFrame(() => {
+        if ($activeDropdown) {
+          // Find the button and dropdown elements
+          const button = document.querySelector(`.dropdown-toggle[data-user-id="${$activeDropdown}"]`) as HTMLElement;
+          const dropdown = document.querySelector(`.dropdown-menu[data-id="${$activeDropdown}"]`) as HTMLElement;
+
+          if (button && dropdown) {
+            const buttonRect = button.getBoundingClientRect();
+
+            // Update dropdown position to stay relative to the button
+            dropdown.style.top = `${buttonRect.bottom + 5}px`;
+            dropdown.style.left = `${buttonRect.left}px`;
+          }
+        }
+        scrollUpdateFrame = null;
+      });
+    }
+  }
+
   /**
    * Starts the message timer for auto-dismissal and progress animation
    * Uses requestAnimationFrame for smoother animation
@@ -371,10 +396,20 @@
     // Add global click handler to close dropdowns
     document.addEventListener('click', handleClickOutside);
 
+    // Add scroll handler to update dropdown position when scrolling
+    window.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
+
     // Clean up event listener and timers on component destroy
     return (): void => {
       document.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
       clearMessageTimer();
+
+      // Cancel any pending scroll update frame
+      if (scrollUpdateFrame) {
+        cancelAnimationFrame(scrollUpdateFrame);
+        scrollUpdateFrame = null;
+      }
     };
   });
 </script>
@@ -519,7 +554,7 @@
               <td>{new Date(user.createdAt).toLocaleDateString()}</td>
               <td class="actions">
                 <div class="dropdown">
-                  <button class="dropdown-toggle" on:click|stopPropagation={(event) => toggleDropdown(user.id, event)} aria-label="User actions">
+                  <button class="dropdown-toggle" data-user-id={user.id} on:click|stopPropagation={(event) => toggleDropdown(user.id, event)} aria-label="User actions">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 16 16" fill="currentColor" class="three-dots-icon">
                       <circle cx="8" cy="3" r="1.6" />
                       <circle cx="8" cy="8" r="1.6" />
@@ -1028,6 +1063,7 @@
   .users-list {
     width: 100%;
     overflow-x: auto;
+    margin-bottom: 200px;
   }
 
   table {
