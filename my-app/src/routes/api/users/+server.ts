@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { user, auditLog } from '$lib/server/db/schema';
-import { desc, like, asc } from 'drizzle-orm';
+import { desc, like, asc, eq, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { generateUserId } from '$lib/server/utils/id-generator';
 
@@ -22,19 +22,49 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
     // Get pagination parameters
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '10')));
     const offset = (page - 1) * limit;
+
+    // Get filter parameters
+    const role = url.searchParams.get('role') || '';
+    const status = url.searchParams.get('status') || '';
 
     // Get sort parameters
     const sortBy = url.searchParams.get('sortBy') || 'createdAt';
     const sortOrder = url.searchParams.get('sortOrder') || 'desc';
 
-    // Build query
+    // Build the base query
     let query = db.select().from(user);
+
+    // Build the count query (for total records)
+    let countQuery = db.select({
+      count: sql<number>`count(*)`
+    }).from(user);
+
+    // Build conditions array
+    const conditions = [];
 
     // Add search filter if provided
     if (search) {
-      query = query.where(like(user.username, `%${search}%`));
+      conditions.push(like(user.username, `%${search}%`));
+    }
+
+    // Add role filter if provided
+    if (role && role !== 'all') {
+      conditions.push(eq(user.role, role));
+    }
+
+    // Add status filter if provided
+    if (status && status !== 'all') {
+      const isActive = status === 'active';
+      conditions.push(eq(user.isActive, isActive));
+    }
+
+    // Apply conditions to both queries
+    if (conditions.length > 0) {
+      const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
+      query = query.where(whereClause);
+      countQuery = countQuery.where(whereClause);
     }
 
     // Add sorting
@@ -57,24 +87,29 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     }
 
     // Add pagination
-    query = query.limit(limit + 1).offset(offset);
+    query = query.limit(limit).offset(offset);
 
-    // Execute query
-    const results = await query;
+    // Execute queries
+    const [users, countResult] = await Promise.all([
+      query,
+      countQuery
+    ]);
 
-    // Check if there are more results
-    const hasMore = results.length > limit;
+    // Get total count and handle potential undefined result
+    const totalCount = countResult && countResult[0] && typeof countResult[0].count !== 'undefined'
+      ? Number(countResult[0].count)
+      : 0;
 
-    // Remove the extra item if we fetched more than our limit
-    const users = hasMore ? results.slice(0, limit) : results;
+    const totalPages = Math.max(1, Math.ceil(totalCount / limit));
 
     // Return the results
     return json({
-      users,
+      users: users || [],
       pagination: {
         page,
         limit,
-        hasMore
+        totalCount,
+        totalPages
       }
     });
   } catch (err) {

@@ -329,5 +329,12 @@
 <style>
   .interactive-canvas {
     border-radius: 8px;
+    display: block;
+    width: 150px;
+    height: 150px;
+    min-width: 150px;
+    min-height: 150px;
+    max-width: 150px;
+    max-height: 150px;
   }
 </style>

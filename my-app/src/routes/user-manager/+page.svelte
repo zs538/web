@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
   import { fade, slide } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import AddUserForm from '$lib/components/AddUserForm.svelte';
@@ -11,7 +11,6 @@
   // Local state
   let users = data.users || [];
   let searchQuery = '';
-  let filteredUsers = users;
   let showAddUserForm = false;
   let showConfirmDialog = false;
   let showPasswordResetPopup = false;
@@ -22,6 +21,17 @@
   let success = '';
   let showFilterMenu = false; // Track if filter menu is open
   let newPassword = ''; // For password reset
+  let isSpinning = false; // Track spinning animation state
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Pagination state
+  let currentPage = 1;
+  let totalPages = Math.max(1, Math.ceil((data.totalCount || 0) / 10));
+  let totalCount = data.totalCount || 0;
+  let unfilteredTotalCount = data.totalCount || 0; // Store the original total count
+  let pageInputValue = currentPage.toString();
+  let isEditingPage = false;
+  let isHoveringCount = false;
 
   // Message timer state
   let messageTimer: ReturnType<typeof setTimeout> | null = null;
@@ -41,41 +51,15 @@
     filterSort !== 'newest'
   ].filter(Boolean).length;
 
-  // Apply all filters to users
-  $: {
-    // Start with all users
-    let result = [...users];
-
-    // Apply username search filter
-    if (searchQuery.trim() !== '') {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(user =>
-        user.username.toLowerCase().includes(query)
-      );
-    }
-
-    // Apply role filter
-    if (filterRole !== 'all') {
-      result = result.filter(user => user.role === filterRole);
-    }
-
-    // Apply status filter
-    if (filterStatus !== 'all') {
-      const isActive = filterStatus === 'active';
-      result = result.filter(user => user.isActive === isActive);
-    }
-
-    // Apply sorting
-    if (filterSort === 'oldest') {
-      result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    } else if (filterSort === 'username') {
-      result.sort((a, b) => a.username.localeCompare(b.username));
-    } else {
-      // Default: newest first
-      result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }
-
-    filteredUsers = result;
+  // Simple reactive statement to update users when filters change
+  $: if (searchQuery || filterRole || filterStatus || filterSort) {
+    // Debounce the filter changes
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      currentPage = 1; // Reset to page 1 when filters change
+      pageInputValue = '1'; // Update page input
+      fetchUsers();
+    }, 300);
   }
 
   // Toggle filter menu
@@ -95,7 +79,7 @@
    * Generates a random password with only letters and numbers
    * Uses cryptographically secure random values for better security
    */
-  function generatePassword(): void {
+  function generatePasswordString(): string {
     const lowercase: string = 'abcdefghijklmnopqrstuvwxyz';
     const uppercase: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers: string = '0123456789';
@@ -114,7 +98,29 @@
       generatedPassword += charset[randomValues[i] % charset.length];
     }
 
-    newPassword = generatedPassword;
+    return generatedPassword;
+  }
+
+  /**
+   * Generate password with animation (for button clicks)
+   */
+  function generatePassword(): void {
+    // Always generate a new password
+    newPassword = generatePasswordString();
+
+    // Trigger animation only if not already spinning
+    if (!isSpinning) {
+      isSpinning = true;
+      setTimeout(() => {
+        isSpinning = false;
+      }, 700); // Match the animation duration
+    }
+  }
+
+  // Select all text in password input when focused
+  function selectAllPassword(event: FocusEvent) {
+    const target = event.target as HTMLInputElement;
+    target.select();
   }
 
 
@@ -125,7 +131,7 @@
 
     if (action === 'reset-password') {
       // For password reset, show the custom popup instead
-      newPassword = ''; // Clear any previous password
+      newPassword = generatePasswordString(); // Generate password without animation
       showPasswordResetPopup = true;
     } else {
       // For other actions, use the standard confirm dialog
@@ -144,24 +150,119 @@
     newPassword = '';
   }
 
-  // Refresh user list
-  async function refreshUsers() {
+  // Fetch users with current filters and pagination
+  async function fetchUsers() {
     try {
       loading = true;
-      const response = await fetch('/api/users');
-      if (response.ok) {
-        const data = await response.json();
-        users = data.users;
-      } else {
-        throw new Error('Failed to fetch users');
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      params.set('limit', '10');
+
+      if (searchQuery) params.set('search', searchQuery);
+      if (filterRole && filterRole !== 'all') params.set('role', filterRole);
+      if (filterStatus && filterStatus !== 'all') params.set('status', filterStatus);
+      if (filterSort && filterSort !== 'newest') {
+        if (filterSort === 'oldest') {
+          params.set('sortBy', 'createdAt');
+          params.set('sortOrder', 'asc');
+        } else if (filterSort === 'username') {
+          params.set('sortBy', 'username');
+          params.set('sortOrder', 'asc');
+        }
+      }
+
+      const response = await fetch(`/api/users?${params.toString()}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data || !Array.isArray(data.users)) {
+        throw new Error('Invalid response format');
+      }
+
+      users = data.users;
+      totalPages = data.pagination?.totalPages || 1;
+      totalCount = data.pagination?.totalCount || 0;
+
+      // Store unfiltered total count only when no filters are applied
+      if (activeFilterCount === 0 && !searchQuery) {
+        unfilteredTotalCount = totalCount;
       }
     } catch (err: unknown) {
-      console.error('Error fetching users:', err);
-      error = 'Failed to refresh user list';
+      error = err instanceof Error ? err.message : 'Failed to fetch users';
+
+      // Set default values in case of error
+      users = [];
+      totalPages = 1;
+      totalCount = 0;
     } finally {
       loading = false;
     }
   }
+
+  // Handle page navigation
+  function goToPage(page: number) {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+
+    // Clear any existing debounce timer to prevent conflicts
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    // Update page state
+    currentPage = page;
+    pageInputValue = page.toString();
+    isEditingPage = false;
+
+    // Fetch users for the new page
+    fetchUsers();
+  }
+
+  // Handle page input submission
+  function handlePageInputSubmit() {
+    // If input is empty, reset to current page
+    if (!pageInputValue.trim()) {
+      pageInputValue = currentPage.toString();
+      isEditingPage = false;
+      return;
+    }
+
+    // Parse the page number
+    const pageNumber = parseInt(pageInputValue, 10);
+
+    // Validate the page number
+    if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > totalPages) {
+      // Invalid input, reset to current page
+      pageInputValue = currentPage.toString();
+      isEditingPage = false;
+      return;
+    }
+
+    // Navigate to the specified page (goToPage already sets isEditingPage = false)
+    goToPage(pageNumber);
+  }
+
+  // Toggle page edit mode
+  function togglePageEditMode() {
+    isEditingPage = !isEditingPage;
+    if (isEditingPage) {
+      // When entering edit mode, ensure the input value matches the current page
+      pageInputValue = currentPage.toString();
+      // Focus the input after the DOM updates
+      setTimeout(() => {
+        const input = document.querySelector('.page-input') as HTMLInputElement;
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 0);
+    }
+  }
+
+
 
   // Execute action
   async function executeAction() {
@@ -210,7 +311,7 @@
 
         // If we deleted a user, refresh the list
         if (actionType === 'delete-user') {
-          await refreshUsers();
+          await fetchUsers();
         }
       } else {
         const errorData = await response.json();
@@ -237,7 +338,7 @@
   }
 
   // Toggle dropdown menu
-  async function toggleDropdown(userId: string, event: MouseEvent) {
+  function toggleDropdown(userId: string, event: MouseEvent) {
     // If this dropdown is already active, close it
     if ($activeDropdown === userId) {
       $activeDropdown = null;
@@ -247,20 +348,18 @@
     // Otherwise, activate this dropdown
     $activeDropdown = userId;
 
-    // Wait for the DOM to update
-    await tick();
-
-    // Position the dropdown menu
+    // Position the dropdown menu immediately
     const button = event.currentTarget as HTMLElement;
-    const dropdown = document.querySelector(`.dropdown-menu[data-id="${userId}"]`) as HTMLElement;
+    const buttonRect = button.getBoundingClientRect();
 
-    if (button && dropdown) {
-      const buttonRect = button.getBoundingClientRect();
-
-      // Position the dropdown below and to the right of the button
-      dropdown.style.top = `${buttonRect.bottom + 5}px`;
-      dropdown.style.left = `${buttonRect.left}px`;
-    }
+    // Use setTimeout to ensure DOM update, but without async/await complexity
+    setTimeout(() => {
+      const dropdown = document.querySelector(`.dropdown-menu[data-id="${userId}"]`) as HTMLElement;
+      if (dropdown) {
+        dropdown.style.top = `${buttonRect.bottom + 5}px`;
+        dropdown.style.left = `${buttonRect.left}px`;
+      }
+    }, 0);
   }
 
   // Close dropdown and filter menu when clicking outside
@@ -284,30 +383,7 @@
     }
   }
 
-  // Throttle scroll updates for better performance
-  let scrollUpdateFrame: number | null = null;
 
-  // Update dropdown position when scrolling
-  function handleScroll() {
-    if ($activeDropdown && !scrollUpdateFrame) {
-      scrollUpdateFrame = requestAnimationFrame(() => {
-        if ($activeDropdown) {
-          // Find the button and dropdown elements
-          const button = document.querySelector(`.dropdown-toggle[data-user-id="${$activeDropdown}"]`) as HTMLElement;
-          const dropdown = document.querySelector(`.dropdown-menu[data-id="${$activeDropdown}"]`) as HTMLElement;
-
-          if (button && dropdown) {
-            const buttonRect = button.getBoundingClientRect();
-
-            // Update dropdown position to stay relative to the button
-            dropdown.style.top = `${buttonRect.bottom + 5}px`;
-            dropdown.style.left = `${buttonRect.left}px`;
-          }
-        }
-        scrollUpdateFrame = null;
-      });
-    }
-  }
 
   /**
    * Starts the message timer for auto-dismissal and progress animation
@@ -391,25 +467,14 @@
 
   // Initialize
   onMount((): (() => void) => {
-    refreshUsers();
-
     // Add global click handler to close dropdowns
     document.addEventListener('click', handleClickOutside);
-
-    // Add scroll handler to update dropdown position when scrolling
-    window.addEventListener('scroll', handleScroll, true); // Use capture phase to catch all scroll events
 
     // Clean up event listener and timers on component destroy
     return (): void => {
       document.removeEventListener('click', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll, true);
       clearMessageTimer();
-
-      // Cancel any pending scroll update frame
-      if (scrollUpdateFrame) {
-        cancelAnimationFrame(scrollUpdateFrame);
-        scrollUpdateFrame = null;
-      }
+      if (debounceTimer) clearTimeout(debounceTimer);
     };
   });
 </script>
@@ -486,14 +551,32 @@
           </button>
         {/if}
       </div>
-      <div class="user-count" class:filtered={activeFilterCount > 0}>
+      <div
+        class="user-count"
+        class:filtered={activeFilterCount > 0 || searchQuery}
+        on:mouseenter={() => isHoveringCount = true}
+        on:mouseleave={() => isHoveringCount = false}
+        on:click={activeFilterCount > 0 || searchQuery ? resetFilters : undefined}
+        role={activeFilterCount > 0 || searchQuery ? "button" : undefined}
+        tabindex={activeFilterCount > 0 || searchQuery ? 0 : undefined}
+        on:keydown={(e) => (activeFilterCount > 0 || searchQuery) && e.key === 'Enter' && resetFilters()}
+        aria-label={activeFilterCount > 0 || searchQuery ? "Clear all filters" : undefined}
+      >
         <span class="count-text">
-          {#if activeFilterCount > 0}
-            Showing {filteredUsers.length} of {users.length} users
+          {#if activeFilterCount > 0 || searchQuery}
+            Showing {totalCount} of {unfilteredTotalCount} users
           {:else}
-            Total users: {users.length}
+            Total users: {totalCount}
           {/if}
         </span>
+
+        {#if activeFilterCount > 0 || searchQuery}
+          <div class="clear-overlay" class:visible={isHoveringCount}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        {/if}
       </div>
     </div>
   {/if}
@@ -505,7 +588,7 @@
           on:userAdded={async (event) => {
             // Set success message from the event
             success = event.detail.message;
-            await refreshUsers();
+            await fetchUsers();
 
             // Only redirect to list if the toggle is enabled
             if (event.detail.redirectToList) {
@@ -515,10 +598,10 @@
         />
       </div>
     {:else}
-      <div class="users-list" in:fade={{ duration: 200, delay: 200 }} out:fade={{ duration: 200 }}>
+      <div class="users-list">
       {#if loading && users.length === 0}
         <div class="loading">Loading users...</div>
-      {:else if filteredUsers.length === 0}
+      {:else if users.length === 0}
         <div class="no-results">
           {activeFilterCount > 0 ? 'No users match the current filters' : 'No users found'}
         </div>
@@ -546,7 +629,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each filteredUsers as user (user.id)}
+          {#each users as user (user.id)}
             <tr>
               <td>{user.username}</td>
               <td>{user.role}</td>
@@ -598,8 +681,116 @@
               </td>
             </tr>
           {/each}
+
+          <!-- Add empty rows to maintain consistent page height -->
+          {#if currentPage === totalPages && users.length < 10}
+            {#each Array(10 - users.length) as _}
+              <tr class="empty-row">
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td class="actions">
+                  <div class="dropdown">
+                    <button class="dropdown-toggle empty-button" disabled aria-hidden="true">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 16 16" fill="transparent" class="three-dots-icon">
+                        <circle cx="8" cy="3" r="1.6" />
+                        <circle cx="8" cy="8" r="1.6" />
+                        <circle cx="8" cy="13" r="1.6" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {/each}
+          {/if}
         </tbody>
       </table>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <button
+          class="page-btn first"
+          disabled={currentPage === 1}
+          on:click={() => goToPage(1)}
+          aria-label="First page"
+        >
+          <img src="/chevron-first.svg" alt="First page" class="chevron-icon" />
+        </button>
+
+        <button
+          class="page-btn prev"
+          disabled={currentPage === 1}
+          on:click={() => goToPage(currentPage - 1)}
+          aria-label="Previous page"
+        >
+          <img src="/chevron-left.svg" alt="Previous page" class="chevron-icon" />
+        </button>
+
+        {#if isEditingPage}
+          <div class="page-indicator editing">
+            <input
+              type="text"
+              class="page-input"
+              bind:value={pageInputValue}
+              on:input={(e) => {
+                // Only allow numeric input
+                let value = e.currentTarget.value.replace(/[^0-9]/g, '');
+
+                // If value is not empty, validate the range
+                if (value) {
+                  const numValue = parseInt(value, 10);
+                  if (numValue > totalPages) {
+                    // If greater than max pages, set to max
+                    value = totalPages.toString();
+                  } else if (numValue < 1) {
+                    // If less than 1, set to 1
+                    value = '1';
+                  }
+                }
+
+                e.currentTarget.value = value;
+                pageInputValue = value;
+              }}
+              on:keydown={(e) => e.key === 'Enter' && handlePageInputSubmit()}
+              on:blur={() => isEditingPage = false}
+              aria-label="Go to page"
+              inputmode="numeric"
+              pattern="[0-9]*"
+            />
+            <span class="page-separator">&nbsp;/&nbsp;</span>
+            <span class="total-pages">{totalPages}</span>
+          </div>
+        {:else}
+          <button
+            class="page-indicator-btn"
+            on:click={togglePageEditMode}
+            aria-label="Click to edit page number"
+          >
+            <span class="current-page">{currentPage}</span>
+            <span class="page-separator">&nbsp;/&nbsp;</span>
+            <span class="total-pages">{totalPages}</span>
+          </button>
+        {/if}
+
+        <button
+          class="page-btn next"
+          disabled={currentPage === totalPages}
+          on:click={() => goToPage(currentPage + 1)}
+          aria-label="Next page"
+        >
+          <img src="/chevron-right.svg" alt="Next page" class="chevron-icon" />
+        </button>
+
+        <button
+          class="page-btn last"
+          disabled={currentPage === totalPages}
+          on:click={() => goToPage(totalPages)}
+          aria-label="Last page"
+        >
+          <img src="/chevron-last.svg" alt="Last page" class="chevron-icon" />
+        </button>
+      </div>
     {/if}
       </div>
     {/if}
@@ -678,6 +869,7 @@
                 type="text"
                 id="new-password"
                 bind:value={newPassword}
+                on:focus={selectAllPassword}
                 disabled={loading}
                 required
                 minlength="6"
@@ -688,8 +880,9 @@
                 class="generate-btn"
                 on:click={generatePassword}
                 disabled={loading}
+                aria-label="Generate password"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#999"><path d="M640-260q25 0 42.5-17.5T700-320q0-25-17.5-42.5T640-380q-25 0-42.5 17.5T580-320q0 25 17.5 42.5T640-260ZM480-420q25 0 42.5-17.5T540-480q0-25-17.5-42.5T480-540q-25 0-42.5 17.5T420-480q0 25 17.5 42.5T480-420ZM320-580q25 0 42.5-17.5T380-640q0-25-17.5-42.5T320-700q-25 0-42.5 17.5T260-640q0 25 17.5 42.5T320-580ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#656565" class="generate-icon" class:spinning={isSpinning}><path d="M204-318q-22-38-33-78t-11-82q0-134 93-228t227-94h7l-64-64 56-56 160 160-160 160-56-56 64-64h-7q-100 0-170 70.5T240-478q0 26 6 51t18 49l-60 60ZM481-40 321-200l160-160 56 56-64 64h7q100 0 170-70.5T720-482q0-26-6-51t-18-49l60-60q22 38 33 78t11 82q0 134-93 228t-227 94h-7l64 64-56 56Z"/></svg>
               </button>
             </div>
           </div>
@@ -711,8 +904,7 @@
 
 <style>
   .user-manager {
-    width: 100%;
-    max-width: 900px;
+    width: 500px;
     margin: 0 auto;
     padding: 0;
   }
@@ -799,16 +991,40 @@
     transition: all 0.15s ease;
     display: flex;
     align-items: center;
+    position: relative;
   }
 
   .count-text {
     display: inline-block;
     transform: translateY(1px);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 
   .user-count.filtered {
     color: #3498db; /* Blue when filters are applied */
     background: rgba(52, 152, 219, 0.1); /* Light blue background */
+  }
+
+  .clear-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    color: white;
+  }
+
+  .clear-overlay.visible {
+    opacity: 1;
   }
 
   .search-input:focus {
@@ -1062,42 +1278,53 @@
 
   .users-list {
     width: 100%;
-    overflow-x: auto;
-    margin-bottom: 200px;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
     font-family: 'SuisseIntl', sans-serif; /* Apply post text font to table */
+    table-layout: fixed; /* Enable fixed column widths */
   }
 
   th, td {
-    padding: 10px;
     text-align: left;
     border-bottom: 1px solid #ddd;
-  }
-
-  td {
-    font-family: 'SuisseIntl', sans-serif;
-    font-weight: 300; /* Use the light version of Suisse font */
-    color: #333; /* Slightly lighter text color */
+    box-sizing: border-box; /* Include padding in width calculations */
   }
 
   th {
+    padding: 7px 10px; /* Adjust header row to match data rows */
     background: #f5f5f5;
     font-weight: normal;
     font-family: 'ManifoldExtended', sans-serif; /* Keep headers in the navigation font */
   }
 
+  td {
+    padding: 7px 10px; /* Adjust vertical padding to make rows 49px high */
+    font-family: 'SuisseIntl', sans-serif;
+    font-weight: 300; /* Use the light version of Suisse font */
+    color: #333; /* Slightly lighter text color */
+  }
+
+  /* Row hover effect */
+  tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  /* Fixed column widths */
+  th:nth-child(1), td:nth-child(1) { width: 32%; } /* Username */
+  th:nth-child(2), td:nth-child(2) { width: 16%; } /* Role */
+  th:nth-child(3), td:nth-child(3) { width: 20%; } /* Status */
+  th:nth-child(4), td:nth-child(4) { width: 21.6%; } /* Created */
+  th:nth-child(5), td:nth-child(5) { width: 10.4%; } /* Actions */
+
   .actions {
     position: relative;
-    width: 40px;
     text-align: center;
   }
 
   th:last-child {
-    width: 40px;
     text-align: center;
   }
 
@@ -1192,7 +1419,156 @@
     color: #666;
   }
 
+  /* Empty row styling to maintain consistent table height */
+  .empty-row td {
+    border-bottom: 1px solid #ddd;
+    color: transparent; /* Hide the &nbsp; content */
+  }
 
+  /* Empty button styling - invisible but maintains dimensions */
+  .empty-button {
+    opacity: 0;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .empty-button:disabled {
+    opacity: 0;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+  }
+
+  .page-btn {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 5px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: 'SuisseIntl', sans-serif;
+    font-size: 13px;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .chevron-icon {
+    width: 16px;
+    height: 16px;
+    filter: invert(50%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+  }
+
+  /* Slightly lighter and smaller for first/last page icons */
+  .page-btn.first .chevron-icon,
+  .page-btn.last .chevron-icon {
+    width: 14px;
+    height: 14px;
+    filter: invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+  }
+
+  .page-btn:disabled .chevron-icon {
+    opacity: 0.5;
+  }
+
+  .page-btn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .page-btn:active:not(:disabled) {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .page-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .page-indicator {
+    font-family: 'ManifoldExtended', sans-serif;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    width: 70px;
+    box-sizing: border-box;
+  }
+
+  .page-indicator.editing {
+    border: 1px solid #ddd;
+  }
+
+  .page-indicator-btn {
+    font-family: 'ManifoldExtended', sans-serif;
+    font-size: 14px;
+    color: #333;
+    background: transparent;
+    border: none;
+    padding: 0;
+    height: 30px;
+    width: 70px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  .page-indicator-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .current-page {
+    color: #333;
+    position: relative;
+    top: -1px;
+  }
+
+  .page-input {
+    width: 20px;
+    height: 28px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    font-family: 'ManifoldExtended', sans-serif;
+    font-size: 14px;
+    text-align: right;
+    border-radius: 0;
+    color: #333;
+    box-sizing: border-box;
+    background: transparent;
+    position: relative;
+    top: -1px;
+  }
+
+  .page-input:focus {
+    outline: none;
+  }
+
+  .page-separator {
+    font-family: 'ManifoldExtended', sans-serif;
+    font-size: 14px;
+    color: #333;
+    position: relative;
+    top: -1px;
+  }
+
+  .total-pages {
+    font-family: 'ManifoldExtended', sans-serif;
+    font-size: 14px;
+    color: #333;
+    position: relative;
+    top: -1px;
+  }
 
   .confirm-dialog-backdrop {
     position: fixed;
@@ -1337,7 +1713,7 @@
     padding: 0;
     background: none;
     border: 1px solid #ccc;
-    border-left: none;
+    border-left: 1px solid transparent;
     cursor: pointer;
     font-size: 14px;
     font-family: 'ManifoldExtended', sans-serif;
@@ -1352,12 +1728,31 @@
   .generate-btn:hover {
     background: rgba(0, 0, 0, 0.05);
     border: 1px solid #bbb;
-    border-left: none;
   }
 
   .generate-btn:active {
     background-color: rgba(0, 0, 0, 0.1);
     border: 1px solid #aaa;
-    border-left: none;
+  }
+
+  .generate-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+    transition: opacity 0.15s ease;
+  }
+
+  .generate-btn:hover .generate-icon {
+    opacity: 1;
+  }
+
+  @keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .generate-icon.spinning {
+    animation: rotate 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    will-change: transform;
   }
 </style>

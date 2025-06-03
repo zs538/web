@@ -35,8 +35,10 @@
   let currentPage = 1;
   let totalPages = Math.max(1, Math.ceil((data.totalCount || 0) / 15));
   let totalCount = data.totalCount || 0;
+  let unfilteredTotalCount = data.totalCount || 0; // Store the original total count
   let pageInputValue = '1'; // Variable for page input field
   let isEditingPage = false; // Track if user is editing the page number
+  let isHoveringCount = false; // Track hover state for filter clearing
 
   // Filter state
   let filterAction = '';
@@ -239,6 +241,11 @@
         logs = data.logs as LogEntry[];
         totalPages = data.pagination?.totalPages || 1;
         totalCount = data.pagination?.totalCount || 0;
+
+        // Store unfiltered total count only when no filters are applied
+        if (activeFilterCount === 0 && !searchQuery) {
+          unfilteredTotalCount = totalCount;
+        }
       } catch (parseError) {
         throw new Error('Failed to parse server response');
       }
@@ -505,14 +512,32 @@
       {/if}
     </div>
     <div class="log-count-container">
-      <div class="log-count" class:filtered={activeFilterCount > 0}>
+      <div
+        class="log-count"
+        class:filtered={activeFilterCount > 0 || searchQuery}
+        on:mouseenter={() => isHoveringCount = true}
+        on:mouseleave={() => isHoveringCount = false}
+        on:click={activeFilterCount > 0 || searchQuery ? resetFilters : undefined}
+        role={activeFilterCount > 0 || searchQuery ? "button" : undefined}
+        tabindex={activeFilterCount > 0 || searchQuery ? 0 : undefined}
+        on:keydown={(e) => (activeFilterCount > 0 || searchQuery) && e.key === 'Enter' && resetFilters()}
+        aria-label={activeFilterCount > 0 || searchQuery ? "Clear all filters" : undefined}
+      >
         <span class="count-text">
-          {#if activeFilterCount > 0}
-            Showing {logs.length} of {totalCount} logs
+          {#if activeFilterCount > 0 || searchQuery}
+            Showing {totalCount} of {unfilteredTotalCount} logs
           {:else}
             Total logs: {totalCount}
           {/if}
         </span>
+
+        {#if activeFilterCount > 0 || searchQuery}
+          <div class="clear-overlay" class:visible={isHoveringCount}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        {/if}
       </div>
       <button
         class="refresh-btn"
@@ -944,16 +969,40 @@
     display: flex;
     align-items: center;
     flex: 1;
+    position: relative;
   }
 
   .count-text {
     display: inline-block;
     transform: translateY(1px);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 
   .log-count.filtered {
     color: #3498db;
     background: rgba(52, 152, 219, 0.1);
+  }
+
+  .clear-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    color: white;
+  }
+
+  .clear-overlay.visible {
+    opacity: 1;
   }
 
   .refresh-btn {
@@ -999,11 +1048,10 @@
 
   .logs-list {
     width: 100%;
-    overflow-x: auto;
   }
 
   table {
-    width: 500px;
+    width: 100%;
     border-collapse: collapse;
     font-family: 'SuisseIntl', sans-serif;
     table-layout: fixed;
@@ -1030,6 +1078,11 @@
     background: #f5f5f5;
     font-weight: normal;
     font-family: 'ManifoldExtended', sans-serif;
+  }
+
+  /* Row hover effect */
+  tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
   }
 
   .timestamp {

@@ -102,11 +102,6 @@
     scrollbar-gutter: stable; /* Modern browsers: Reserve space for scrollbar to prevent layout shifts */
   }
 
-  /* Fallback for browsers that don't support scrollbar-gutter */
-  :global(.container) {
-    padding-right: calc(100vw - 100%); /* Fallback: Compensate for scrollbar width */
-  }
-
   :global(body) {
     font-family: 'ManifoldExtended', sans-serif;
     margin: 0;
@@ -157,6 +152,9 @@
     margin-bottom: 0.5rem;
     padding: 0;
     width: 180px;
+    height: 150px;
+    min-height: 150px;
+    flex-shrink: 0;
   }
 
   .nav-separator {
@@ -202,9 +200,11 @@
     width: 500px; /* Increased from 400px to 500px (added 100px) */
     min-height: 100vh;
     padding-top: 2rem;
+    padding-bottom: 2rem;
     position: absolute;
     left: 50%;
     margin-left: -250px; /* Half of the new width */
+    box-sizing: border-box;
   }
   @media (max-width: 920px) {
     .container {

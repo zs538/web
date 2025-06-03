@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { fade } from 'svelte/transition';
 
   // Event dispatcher with typed events
@@ -18,12 +18,13 @@
   let error = '';
   let success = '';
   let redirectToList = true; // Default to redirect after submission
+  let isSpinning = false; // Track spinning animation state
 
   /**
    * Generates a random password with only letters and numbers
    * Uses cryptographically secure random values for better security
    */
-  function generatePassword(): void {
+  function generatePasswordString(): string {
     const lowercase: string = 'abcdefghijklmnopqrstuvwxyz';
     const uppercase: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers: string = '0123456789';
@@ -42,7 +43,23 @@
       newPassword += charset[randomValues[i] % charset.length];
     }
 
-    password = newPassword;
+    return newPassword;
+  }
+
+  /**
+   * Generate password with animation (for button clicks)
+   */
+  function generatePassword(): void {
+    // Always generate a new password
+    password = generatePasswordString();
+
+    // Trigger animation only if not already spinning
+    if (!isSpinning) {
+      isSpinning = true;
+      setTimeout(() => {
+        isSpinning = false;
+      }, 700); // Match the animation duration
+    }
   }
 
   // Submit form
@@ -90,7 +107,7 @@
 
       // Reset form
       username = '';
-      password = '';
+      password = generatePasswordString(); // Generate new password without animation
       role = 'user';
 
       // Notify parent component
@@ -124,6 +141,22 @@
     role = 'user';
     error = '';
   }
+
+  // Toggle the redirect checkbox
+  function toggleRedirect() {
+    redirectToList = !redirectToList;
+  }
+
+  // Select all text in password input when focused
+  function selectAllPassword(event: FocusEvent) {
+    const target = event.target as HTMLInputElement;
+    target.select();
+  }
+
+  // Generate password on component mount
+  onMount(() => {
+    password = generatePasswordString(); // Generate without animation
+  });
 </script>
 
 <form on:submit|preventDefault={handleSubmit} class="add-user-form">
@@ -146,6 +179,7 @@
         type="text"
         id="password"
         bind:value={password}
+        on:focus={selectAllPassword}
         disabled={loading}
         required
         minlength="6"
@@ -156,7 +190,7 @@
         on:click={generatePassword}
         disabled={loading}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#999"><path d="M640-260q25 0 42.5-17.5T700-320q0-25-17.5-42.5T640-380q-25 0-42.5 17.5T580-320q0 25 17.5 42.5T640-260ZM480-420q25 0 42.5-17.5T540-480q0-25-17.5-42.5T480-540q-25 0-42.5 17.5T420-480q0 25 17.5 42.5T480-420ZM320-580q25 0 42.5-17.5T380-640q0-25-17.5-42.5T320-700q-25 0-42.5 17.5T260-640q0 25 17.5 42.5T320-580ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#656565" class="generate-icon" class:spinning={isSpinning}><path d="M204-318q-22-38-33-78t-11-82q0-134 93-228t227-94h7l-64-64 56-56 160 160-160 160-56-56 64-64h-7q-100 0-170 70.5T240-478q0 26 6 51t18 49l-60 60ZM481-40 321-200l160-160 56 56-64 64h7q100 0 170-70.5T720-482q0-26-6-51t-18-49l60-60q22 38 33 78t11 82q0 134-93 228t-227 94h-7l64 64-56 56Z"/></svg>
       </button>
     </div>
   </div>
@@ -176,8 +210,8 @@
   {/if}
 
   <div class="form-actions">
-    <div class="toggle-container">
-      <label class="toggle-switch">
+    <div class="toggle-container" on:click={toggleRedirect}>
+      <label class="toggle-switch" on:click|stopPropagation>
         <input type="checkbox" bind:checked={redirectToList}>
         <span class="toggle-slider"></span>
       </label>
@@ -268,7 +302,7 @@
     padding: 0;
     background: #ffffff;
     border: 1px solid #ccc;
-    border-left: none;
+    border-left: 1px solid transparent;
     cursor: pointer;
     font-size: 14px;
     font-family: 'ManifoldExtended', sans-serif;
@@ -283,13 +317,32 @@
   .generate-btn:hover {
     background: rgba(0, 0, 0, 0.05);
     border: 1px solid #bbb;
-    border-left: none;
   }
 
   .generate-btn:active {
     background-color: rgba(0, 0, 0, 0.1);
     border: 1px solid #aaa;
-    border-left: none;
+  }
+
+  .generate-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+    transition: opacity 0.15s ease;
+  }
+
+  .generate-btn:hover .generate-icon {
+    opacity: 1;
+  }
+
+  @keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .generate-icon.spinning {
+    animation: rotate 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    will-change: transform;
   }
 
   .error-message {
@@ -316,12 +369,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
   }
 
   .toggle-label {
     font-size: 12px;
     font-family: 'ManifoldExtended', sans-serif;
     color: #666;
+    user-select: none;
   }
 
   .toggle-switch {
