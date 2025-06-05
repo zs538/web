@@ -1014,17 +1014,38 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
     color: white;
+    cursor: pointer;
+    border-radius: 0;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    transform: scale(0.95);
   }
 
   .clear-overlay.visible {
     opacity: 1;
+    transform: scale(1);
+  }
+
+  .clear-overlay:hover {
+    background: rgba(0, 0, 0, 0.18);
+    transform: scale(1.02);
+  }
+
+  .clear-overlay svg {
+    transition: transform 0.2s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  }
+
+  .clear-overlay:hover svg {
+    transform: scale(1.1);
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
   }
 
   .search-input:focus {
