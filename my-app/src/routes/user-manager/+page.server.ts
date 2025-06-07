@@ -10,20 +10,14 @@ export const load: PageServerLoad = async (event) => {
   // Ensure user is logged in and has admin role
   protectRouteWithRole(event, ['admin']);
 
-  // Get initial users for server-side rendering (first page)
-  const users = await db.query.user.findMany({
-    orderBy: [desc(user.createdAt)],
-    limit: 10
-  });
-
-  // Get total count for pagination
+  // Get total count for pagination - this is all we need for initial render
   const totalCountResult = await db.select({ count: sql<number>`count(*)` }).from(user);
   const totalCount = totalCountResult && totalCountResult[0] &&
     typeof totalCountResult[0].count !== 'undefined' ?
     Number(totalCountResult[0].count) : 0;
 
   return {
-    users,
+    users: [], // Start with empty array - client will fetch based on actual viewport
     totalCount
   };
 };

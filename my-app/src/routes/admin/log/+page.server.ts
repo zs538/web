@@ -21,21 +21,7 @@ export const load: PageServerLoad = async (event) => {
   // Ensure user is logged in and has admin role
   protectRouteWithRole(event, ['admin']);
 
-  // Get initial logs for server-side rendering
-  const logs = await db.select({
-    id: auditLog.id,
-    userId: auditLog.userId,
-    username: user.username,
-    action: auditLog.action,
-    targetTable: auditLog.targetTable,
-    targetId: auditLog.targetId,
-    details: auditLog.details,
-    timestamp: auditLog.timestamp
-  })
-  .from(auditLog)
-  .leftJoin(user, eq(auditLog.userId, user.id))
-  .orderBy(desc(auditLog.timestamp))
-  .limit(15);
+  // No initial logs needed - client will fetch based on actual viewport
 
   // Get unique actions and target tables for filter dropdowns
   const [actions, targetTables, totalCountResult] = await Promise.all([
@@ -50,7 +36,7 @@ export const load: PageServerLoad = async (event) => {
     Number(totalCountResult[0].count) : 0;
 
   return {
-    logs,
+    logs: [], // Start with empty array - client will fetch based on actual viewport
     filterOptions: {
       actions: actions.map(a => a.action).sort(),
       targetTables: targetTables.map(t => t.targetTable).sort()

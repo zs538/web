@@ -399,7 +399,7 @@
   :global(.media-item.very-tall-media) img,
   :global(.media-item.very-tall-media) video {
     object-fit: contain;
-    max-height: 800px;
+    max-height: 80vh; /* Responsive max-height based on viewport */
     width: 100%;
   }
 

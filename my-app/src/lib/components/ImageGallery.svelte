@@ -250,7 +250,7 @@
 
   .main-image {
     max-width: 60vw;
-    max-height: 60vh;
+    max-height: 80vh; /* Increased from 60vh to 80vh for better media viewing */
     object-fit: contain;
     display: block;
     transition: transform 0.3s ease;

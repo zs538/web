@@ -4,12 +4,13 @@
   import { quintOut } from 'svelte/easing';
   import AddUserForm from '$lib/components/AddUserForm.svelte';
   import { activeDropdown } from '$lib/stores/dropdownStore';
+  import type { User } from '$lib/server/db/schema';
 
   // Get data from server
-  export let data;
+  export let data: { users: User[]; totalCount: number };
 
   // Local state
-  let users = data.users || [];
+  let users: User[] = data.users || [];
   let searchQuery = '';
   let showAddUserForm = false;
   let showConfirmDialog = false;
@@ -24,14 +25,59 @@
   let isSpinning = false; // Track spinning animation state
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Pagination state
+  // Dynamic pagination based on viewport
+  let rowsPerPage = 10; // Default fallback
   let currentPage = 1;
-  let totalPages = Math.max(1, Math.ceil((data.totalCount || 0) / 10));
+  let totalPages = Math.max(1, Math.ceil((data.totalCount || 0) / rowsPerPage));
   let totalCount = data.totalCount || 0;
   let unfilteredTotalCount = data.totalCount || 0; // Store the original total count
   let pageInputValue = currentPage.toString();
   let isEditingPage = false;
   let isHoveringCount = false;
+
+  // Calculate optimal rows per page based on viewport
+  function calculateRowsPerPage() {
+    if (typeof window === 'undefined') return 10; // Server-side fallback
+
+    // Get viewport height
+    const viewportHeight = window.innerHeight;
+
+    // Calculate space used by other elements - conservative but accurate
+    let otherElementsHeight = 0;
+
+    // Main layout padding (from +layout.svelte: padding-top: 2rem = 32px, padding-bottom: 2rem = 32px)
+    otherElementsHeight += 64; // 32px top + 32px bottom
+
+    // H1 element (font-size: 1.8rem ≈ 28.8px + margin-bottom: 1.5rem = 24px)
+    otherElementsHeight += 53; // ~29px + 24px margin
+
+    // View tabs (height: 40px + margin-bottom: 20px)
+    otherElementsHeight += 60; // 40px + 20px margin
+
+    // Search container (height ≈ 35px + margin-bottom: 20px)
+    otherElementsHeight += 55; // 35px + 20px margin
+
+    // Pagination (height ≈ 40px + some margin)
+    otherElementsHeight += 50; // Conservative estimate
+
+    // Table header (padding: 7px top/bottom + font + border ≈ 30px)
+    otherElementsHeight += 30; // Accurate estimate
+
+    // Safety margin for browser chrome, scrollbars, dropdowns, etc.
+    otherElementsHeight += 80; // Realistic safety margin aligned with server-side
+
+    // Available height for table rows
+    const availableHeight = viewportHeight - otherElementsHeight;
+
+    // Each table row height (actual measured height)
+    const rowHeight = 49; // Actual measured row height
+
+    // Calculate how many rows can fit
+    const maxRows = Math.floor(availableHeight / rowHeight);
+
+    // Ensure minimum of 2 rows but NO maximum limit - fill the screen!
+    return Math.max(2, maxRows);
+  }
 
   // Message timer state
   let messageTimer: ReturnType<typeof setTimeout> | null = null;
@@ -158,7 +204,7 @@
       // Build query parameters
       const params = new URLSearchParams();
       params.set('page', currentPage.toString());
-      params.set('limit', '10');
+      params.set('limit', rowsPerPage.toString());
 
       if (searchQuery) params.set('search', searchQuery);
       if (filterRole && filterRole !== 'all') params.set('role', filterRole);
@@ -186,8 +232,8 @@
       }
 
       users = data.users;
-      totalPages = data.pagination?.totalPages || 1;
       totalCount = data.pagination?.totalCount || 0;
+      totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
 
       // Store unfiltered total count only when no filters are applied
       if (activeFilterCount === 0 && !searchQuery) {
@@ -467,12 +513,42 @@
 
   // Initialize
   onMount((): (() => void) => {
+    // Calculate optimal rows per page based on viewport
+    rowsPerPage = calculateRowsPerPage();
+    totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
+
+    // If we have no users (empty initial load), fetch them immediately
+    if (users.length === 0 && totalCount > 0) {
+      fetchUsers();
+    }
+
     // Add global click handler to close dropdowns
     document.addEventListener('click', handleClickOutside);
+
+    // Set up window resize listener to recalculate rows per page
+    const handleResize = () => {
+      const newRowsPerPage = calculateRowsPerPage();
+      if (newRowsPerPage !== rowsPerPage) {
+        rowsPerPage = newRowsPerPage;
+        totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
+
+        // If current page is now beyond total pages, go to last page
+        if (currentPage > totalPages) {
+          currentPage = totalPages;
+          pageInputValue = currentPage.toString();
+        }
+
+        // Refetch with new page size
+        fetchUsers();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
 
     // Clean up event listener and timers on component destroy
     return (): void => {
       document.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('resize', handleResize);
       clearMessageTimer();
       if (debounceTimer) clearTimeout(debounceTimer);
     };
@@ -551,33 +627,31 @@
           </button>
         {/if}
       </div>
-      <div
-        class="user-count"
-        class:filtered={activeFilterCount > 0 || searchQuery}
-        on:mouseenter={() => isHoveringCount = true}
-        on:mouseleave={() => isHoveringCount = false}
-        on:click={activeFilterCount > 0 || searchQuery ? resetFilters : undefined}
-        role={activeFilterCount > 0 || searchQuery ? "button" : undefined}
-        tabindex={activeFilterCount > 0 || searchQuery ? 0 : undefined}
-        on:keydown={(e) => (activeFilterCount > 0 || searchQuery) && e.key === 'Enter' && resetFilters()}
-        aria-label={activeFilterCount > 0 || searchQuery ? "Clear all filters" : undefined}
-      >
-        <span class="count-text">
-          {#if activeFilterCount > 0 || searchQuery}
+      {#if activeFilterCount > 0 || searchQuery}
+        <button
+          class="user-count filtered"
+          on:mouseenter={() => isHoveringCount = true}
+          on:mouseleave={() => isHoveringCount = false}
+          on:click={resetFilters}
+          aria-label="Clear all filters"
+          type="button"
+        >
+          <span class="count-text">
             Showing {totalCount} of {unfilteredTotalCount} users
-          {:else}
-            Total users: {totalCount}
-          {/if}
-        </span>
-
-        {#if activeFilterCount > 0 || searchQuery}
+          </span>
           <div class="clear-overlay" class:visible={isHoveringCount}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-        {/if}
-      </div>
+        </button>
+      {:else}
+        <div class="user-count">
+          <span class="count-text">
+            Total users: {totalCount}
+          </span>
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -598,7 +672,7 @@
         />
       </div>
     {:else}
-      <div class="users-list">
+      <div class="user-list">
       {#if loading && users.length === 0}
         <div class="loading">Loading users...</div>
       {:else if users.length === 0}
@@ -683,8 +757,8 @@
           {/each}
 
           <!-- Add empty rows to maintain consistent page height -->
-          {#if currentPage === totalPages && users.length < 10}
-            {#each Array(10 - users.length) as _}
+          {#if users.length < rowsPerPage}
+            {#each Array(rowsPerPage - users.length) as _}
               <tr class="empty-row">
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
@@ -992,6 +1066,8 @@
     display: flex;
     align-items: center;
     position: relative;
+    border: none; /* For button variant */
+    cursor: default; /* Default cursor for div variant */
   }
 
   .count-text {
@@ -1006,6 +1082,7 @@
   .user-count.filtered {
     color: #3498db; /* Blue when filters are applied */
     background: rgba(52, 152, 219, 0.1); /* Light blue background */
+    cursor: pointer; /* Pointer cursor for button variant */
   }
 
   .clear-overlay {
@@ -1297,9 +1374,9 @@
     background: rgba(46, 125, 50, 0.3);
   }
 
-  .users-list {
-    width: 100%;
-  }
+  /* Removed unused .users-list styling */
+
+  /* Removed .user-list styling - now using dynamic row calculation */
 
   table {
     width: 100%;

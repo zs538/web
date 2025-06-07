@@ -18,9 +18,19 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     // Get search query if any
     const search = url.searchParams.get('search') || '';
 
+    // Calculate default rows if not provided
+    function calculateDefaultRows() {
+      const assumedViewportHeight = 1080; // Common 1920x1080 screen height
+      let otherElementsHeight = 64 + 45 + 50 + 55 + 50 + 25 + 70; // 359px (realistic safety margin)
+      const availableHeight = assumedViewportHeight - otherElementsHeight;
+      const rowHeight = 33; // Actual measured row height
+      const maxRows = Math.floor(availableHeight / rowHeight);
+      return Math.max(3, maxRows).toString();
+    }
+
     // Get pagination parameters
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '15')));
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || calculateDefaultRows())));
     const offset = (page - 1) * limit;
 
     // Get filter parameters

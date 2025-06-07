@@ -31,14 +31,59 @@
   // Selected log for details popup
   let selectedLog: LogEntry | null = null;
 
-  // Pagination state
+  // Dynamic pagination based on viewport
+  let rowsPerPage = 15; // Default fallback
   let currentPage = 1;
-  let totalPages = Math.max(1, Math.ceil((data.totalCount || 0) / 15));
+  let totalPages = Math.max(1, Math.ceil((data.totalCount || 0) / rowsPerPage));
   let totalCount = data.totalCount || 0;
   let unfilteredTotalCount = data.totalCount || 0; // Store the original total count
   let pageInputValue = '1'; // Variable for page input field
   let isEditingPage = false; // Track if user is editing the page number
   let isHoveringCount = false; // Track hover state for filter clearing
+
+  // Calculate optimal rows per page based on viewport
+  function calculateRowsPerPage() {
+    if (typeof window === 'undefined') return 15; // Server-side fallback
+
+    // Get viewport height
+    const viewportHeight = window.innerHeight;
+
+    // Calculate space used by other elements - conservative but accurate
+    let otherElementsHeight = 0;
+
+    // Main layout padding (from +layout.svelte: padding-top: 2rem = 32px, padding-bottom: 2rem = 32px)
+    otherElementsHeight += 64; // 32px top + 32px bottom
+
+    // H1 element (font-size: 1.8rem ≈ 28.8px + margin-bottom: 1rem = 16px)
+    otherElementsHeight += 45; // ~29px + 16px margin
+
+    // Header actions (margin-bottom: 1.5rem = 24px, button height ≈ 35px when visible)
+    otherElementsHeight += 50; // Conservative estimate
+
+    // Search container (height ≈ 35px + margin-bottom: 20px)
+    otherElementsHeight += 55; // 35px + 20px margin
+
+    // Pagination (height ≈ 40px + some margin)
+    otherElementsHeight += 50; // Conservative estimate
+
+    // Table header (padding: 4px top/bottom + font + border ≈ 25px)
+    otherElementsHeight += 25; // Accurate estimate
+
+    // Safety margin for browser chrome, scrollbars, filter dialogs, etc.
+    otherElementsHeight += 70; // Realistic safety margin aligned with server-side
+
+    // Available height for table rows
+    const availableHeight = viewportHeight - otherElementsHeight;
+
+    // Each table row height (actual measured height)
+    const rowHeight = 33; // Actual measured row height
+
+    // Calculate how many rows can fit
+    const maxRows = Math.floor(availableHeight / rowHeight);
+
+    // Ensure minimum of 3 rows but NO maximum limit - fill the screen!
+    return Math.max(3, maxRows);
+  }
 
   // Filter state
   let filterAction = '';
@@ -208,7 +253,7 @@
       // Build query parameters
       const params = new URLSearchParams();
       params.set('page', currentPage.toString());
-      params.set('limit', '15');
+      params.set('limit', rowsPerPage.toString());
       // Add cache-busting parameter
       params.set('_cb', Date.now().toString());
 
@@ -239,8 +284,8 @@
         }
 
         logs = data.logs as LogEntry[];
-        totalPages = data.pagination?.totalPages || 1;
         totalCount = data.pagination?.totalCount || 0;
+        totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
 
         // Store unfiltered total count only when no filters are applied
         if (activeFilterCount === 0 && !searchQuery) {
@@ -386,35 +431,6 @@
     animationInterval = null;
   }
 
-  // Seed sample logs for testing
-  async function seedSampleLogs() {
-    try {
-      loading = true;
-      const response = await fetch('/api/audit-logs/seed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        success = result.message || 'Sample logs created successfully';
-        showMessage(success, 'success');
-        // Refresh logs
-        fetchLogs(false);
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create sample logs');
-      }
-    } catch (err: unknown) {
-      error = err instanceof Error ? err.message : 'Failed to create sample logs';
-      showMessage(error, 'error');
-    } finally {
-      loading = false;
-    }
-  }
-
   // Click handler for closing popups
   const handleClickOutside = (e: MouseEvent): void => {
     const target = e.target as Element;
@@ -439,10 +455,34 @@
 
   // Initialize with server data
   onMount(() => {
+    // Calculate optimal rows per page based on viewport
+    rowsPerPage = calculateRowsPerPage();
+    totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
+
     // Set up click handler (only in browser)
     if (typeof document !== 'undefined') {
       document.addEventListener('click', handleClickOutside);
     }
+
+    // Set up window resize listener to recalculate rows per page
+    const handleResize = () => {
+      const newRowsPerPage = calculateRowsPerPage();
+      if (newRowsPerPage !== rowsPerPage) {
+        rowsPerPage = newRowsPerPage;
+        totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
+
+        // If current page is now beyond total pages, go to last page
+        if (currentPage > totalPages) {
+          currentPage = totalPages;
+          pageInputValue = currentPage.toString();
+        }
+
+        // Refetch with new page size
+        fetchLogs(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
 
     // Initialize the previous filter state
     previousFilterState = JSON.stringify({
@@ -455,9 +495,8 @@
       filterSortOrder
     });
 
-    // Ensure we have valid data
-    if (!Array.isArray(logs) || logs.length === 0) {
-      // Try to fetch logs if none were provided from server
+    // Only refetch if we have no data or if the server data doesn't match our calculated rows
+    if (!Array.isArray(logs) || logs.length === 0 || (logs.length !== rowsPerPage && currentPage === 1 && totalCount > rowsPerPage)) {
       fetchLogs(false).catch(() => {
         error = 'Failed to load audit logs. Please try refreshing the page.';
         showMessage(error, 'error');
@@ -466,6 +505,14 @@
 
     // Enable reactive updates after initial load
     initialized = true;
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('click', handleClickOutside);
+      }
+    };
   });
 
   // Clean up resources when component is destroyed
@@ -484,12 +531,6 @@
 
 <div class="audit-log">
   <h1>Audit Log</h1>
-
-  <div class="header-actions">
-    {#if logs.length === 0}
-      <button class="seed-btn" on:click={seedSampleLogs}>Generate Sample Logs</button>
-    {/if}
-  </div>
 
   <div class="search-container">
     <div class="search-wrapper">
@@ -606,9 +647,9 @@
             </tr>
           {/each}
 
-          <!-- Add empty rows to maintain consistent page height -->
-          {#if currentPage === totalPages && logs.length < 15}
-            {#each Array(15 - logs.length) as _, i}
+          <!-- Add empty rows to maintain consistent page height on last page -->
+          {#if currentPage === totalPages && logs.length < rowsPerPage}
+            {#each Array(rowsPerPage - logs.length) as _}
               <tr class="empty-row">
                 <td class="timestamp">&nbsp;</td>
                 <td class="username">&nbsp;</td>
@@ -874,31 +915,6 @@
     font-family: 'ManifoldExtended', sans-serif;
   }
 
-  .header-actions {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-  }
-
-  .seed-btn {
-    padding: 8px 16px;
-    background: transparent;
-    border: 1px solid #3498db;
-    color: #3498db;
-    cursor: pointer;
-    font-family: 'ManifoldExtended', sans-serif;
-    font-size: 13px;
-    transition: all 0.15s ease;
-  }
-
-  .seed-btn:hover {
-    background: rgba(52, 152, 219, 0.1);
-  }
-
-  .seed-btn:active {
-    background: rgba(52, 152, 219, 0.2);
-  }
-
   /* Search container */
   .search-container {
     margin: 0 auto 20px;
@@ -1069,6 +1085,7 @@
 
   .logs-list {
     width: 100%;
+    /* Removed max-height - now using dynamic row calculation */
   }
 
   table {
