@@ -58,19 +58,19 @@
     otherElementsHeight += 45; // ~29px + 16px margin
 
     // Header actions (margin-bottom: 1.5rem = 24px, button height ≈ 35px when visible)
-    otherElementsHeight += 50; // Conservative estimate
+    otherElementsHeight += 40; // Reduced from 50px - more accurate estimate
 
     // Search container (height ≈ 35px + margin-bottom: 20px)
-    otherElementsHeight += 55; // 35px + 20px margin
+    otherElementsHeight += 50; // Reduced from 55px - more accurate estimate
 
     // Pagination (height ≈ 40px + some margin)
-    otherElementsHeight += 50; // Conservative estimate
+    otherElementsHeight += 45; // Reduced from 50px - more accurate estimate
 
     // Table header (padding: 4px top/bottom + font + border ≈ 25px)
     otherElementsHeight += 25; // Accurate estimate
 
     // Safety margin for browser chrome, scrollbars, filter dialogs, etc.
-    otherElementsHeight += 70; // Realistic safety margin aligned with server-side
+    otherElementsHeight += 40; // Reduced from 70px to better utilize available space
 
     // Available height for table rows
     const availableHeight = viewportHeight - otherElementsHeight;

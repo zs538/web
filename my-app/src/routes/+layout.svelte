@@ -40,7 +40,7 @@
 
         <!-- Check if user is admin -->
         {#if user.role === 'admin'}
-          <li><a href="/admin/log" on:click={e => handleNavigation(e, '/admin/log')}>audit log</a></li>
+          <li><a href="/log" on:click={e => handleNavigation(e, '/log')}>audit log</a></li>
           <li><a href="/user-manager" on:click={e => handleNavigation(e, '/user-manager')}>user manager</a></li>
         {/if}
 
