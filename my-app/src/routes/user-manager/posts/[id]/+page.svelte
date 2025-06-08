@@ -4,9 +4,6 @@
   // Get data from server
   export let data;
 
-  // Current user is the admin viewing this page
-  const currentUser = data.currentUser || data.user;
-
   // The target user whose posts we're viewing
   const targetUser = data.targetUser || data.user;
 
@@ -26,7 +23,6 @@
     <PostsSection
       apiEndpoint={`/api/users/${targetUser.id}/posts`}
       {initialPosts}
-      {currentUser}
     />
   {/if}
 </div>

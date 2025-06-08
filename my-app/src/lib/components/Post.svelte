@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { activeDeleteConfirm } from '$lib/stores/deleteConfirmStore';
   import { galleryActions, type GalleryImage } from '$lib/stores/galleryStore';
   import MediaEmbed from './MediaEmbed.svelte';
   import AudioPlayer from './AudioPlayer.svelte';
@@ -19,19 +18,7 @@
     }>;
   };
 
-  // Current user data for authorization
-  export let currentUser: { id: string; role: string } | null = null;
 
-  // Check if user can delete this post
-  $: canDelete = currentUser && (
-    // Admin can delete any post
-    currentUser.role === 'admin' ||
-    // Regular user can only delete their own posts
-    currentUser.id === post.author.id
-  );
-
-  // Derive showDeleteConfirm from the store value
-  $: showDeleteConfirm = $activeDeleteConfirm === post.id;
 
   // Filter images for gallery
   $: postImages = post.media?.filter(media => media.type === 'image').map((media, index): GalleryImage => ({
@@ -41,12 +28,7 @@
     position: media.position
   })) || [];
 
-  // Toggle delete confirmation dialog
-  function toggleDeleteConfirm() {
-    // If this post's confirmation is already showing, hide it
-    // Otherwise, show this post's confirmation (which automatically hides others)
-    $activeDeleteConfirm = showDeleteConfirm ? null : post.id;
-  }
+
 
   // Handle image click to open gallery
   function handleImageClick(clickedMedia: any) {
@@ -59,51 +41,9 @@
     }
   }
 
-  // Error state for deletion
-  let deleteError = '';
-  let isDeleting = false;
 
-  // Delete the post permanently
-  async function deletePost() {
-    if (!canDelete) return;
 
-    isDeleting = true;
-    deleteError = '';
 
-    try {
-      const response = await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        // Dispatch a custom event to notify parent component
-        const event = new CustomEvent('postDeleted', {
-          detail: { postId: post.id },
-          bubbles: true
-        });
-        document.dispatchEvent(event);
-        // Clear the active delete confirmation
-        $activeDeleteConfirm = null;
-      } else {
-        const errorData = await response.json();
-        console.error('Error deleting post:', errorData);
-        deleteError = errorData.message || 'Failed to delete post';
-      }
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      deleteError = 'Network error. Please try again.';
-    } finally {
-      isDeleting = false;
-    }
-  }
-
-  // Utility for readable timestamp
-  function formatDate(ts: Date | string | number) {
-    return new Date(ts).toLocaleString();
-  }
 
   // Handle media aspect ratios after component mounts
   onMount(() => {
@@ -266,46 +206,12 @@
     </div>
   {/if}
 
-  <!-- Author and Timestamp -->
-  <div class="post-signature">
-    —{post.author?.username} <span class="separator">|</span> <span class="timestamp">{formatDate(post.createdAt)}</span>
 
-    <!-- Delete button - only shown if user can delete this post -->
-    {#if canDelete}
-      <div class="delete-container">
-        <button class="delete-button" class:active={showDeleteConfirm} on:click={toggleDeleteConfirm} aria-label="Delete post">
-          <img src="/x-icon.svg" alt="Delete" class="x-icon" />
-        </button>
-      </div>
-    {/if}
-  </div>
-
-  <!-- Delete confirmation - appears under signature when delete button is clicked -->
-  <div class="delete-confirm-container" class:show={showDeleteConfirm}>
-    {#if deleteError}
-      <div class="delete-error">{deleteError}</div>
-    {:else}
-      <div class="delete-confirm-message">
-        <span>Are you sure?</span>
-        <button
-          class="delete-confirm-button"
-          on:click={deletePost}
-          disabled={isDeleting}
-        >
-          {#if isDeleting}
-            Deleting...
-          {:else}
-            Delete
-          {/if}
-        </button>
-      </div>
-    {/if}
-  </div>
 </article>
 
 <style>
   .post {
-    margin-bottom: 24px;
+    margin: 24px 0; /* Add both top and bottom margins */
     border-radius: 0px;
     padding: 12px 16px 10px 16px;
     background: #fff;
@@ -315,7 +221,7 @@
   .post::after {
     content: '';
     position: absolute;
-    bottom: -12px;
+    bottom: -24px; /* Position right under the bottom margin (24px) */
     left: 0;
     width: 100%;
     height: 1px;
@@ -422,110 +328,5 @@
     white-space: pre-wrap; /* Preserve whitespace and newlines */
   }
 
-  .post-signature {
-    text-align: right;
-    font-size: 0.93em;
-    color: #888;
-    font-style: italic;
-    margin-top: 6px;
-  }
-  .post-signature .separator {
-    margin: 0 6px;
-    color: #ccc;
-    font-style: normal;
-  }
 
-  .post-signature .timestamp {
-    font-size: 0.8em;
-    color: #bbb;
-    font-style: normal;
-  }
-
-  /* Delete button styling */
-  .delete-container {
-    display: inline-block;
-    margin-left: 10px;
-  }
-
-  .delete-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0 5px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  .x-icon {
-    width: 10px;
-    height: 10px;
-    display: block;
-    color: #999;
-    transition: transform 0.25s ease;
-    transform: rotate(0deg);
-  }
-
-  .delete-button:hover .x-icon {
-    filter: brightness(0) saturate(100%) invert(40%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(90%) contrast(100%);
-  }
-
-  .delete-button.active .x-icon {
-    transform: rotate(45deg);
-  }
-
-  /* Delete confirmation styling */
-  .delete-confirm-container {
-    text-align: right;
-    margin-top: 0;
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.25s ease;
-  }
-
-  .delete-confirm-container.show {
-    max-height: 40px; /* Slightly larger to ensure content fits */
-    opacity: 1;
-    margin-top: 10px;
-    pointer-events: auto;
-  }
-
-  .delete-confirm-message {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.75em;
-    color: #aaa;
-    font-style: italic;
-  }
-
-  .delete-confirm-button {
-    background-color: transparent;
-    color: #888;
-    font-size: 0.7em;
-    font-weight: 400;
-    padding: 0 8px;
-    margin-top: 1px;
-    border: 1px solid #ccc;
-    border-radius: 2px;
-    cursor: pointer;
-    height: 40px;
-    transition: all 0.2s ease;
-  }
-
-  .delete-confirm-button:hover {
-    color: #ff3b30;
-    border-color: #ff3b30;
-  }
-
-  .delete-error {
-    color: #ff3b30;
-    font-size: 0.75em;
-    font-weight: 400;
-    text-align: right;
-  }
 </style>

@@ -40,10 +40,12 @@
 		"@node-rs/argon2": "^2.0.2",
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
+		"@types/three": "^0.177.0",
 		"better-sqlite3": "^11.9.1",
 		"dotenv": "^16.5.0",
 		"drizzle-orm": "^0.40.1",
 		"lucia": "^3.2.2",
-		"oslo": "^1.2.1"
+		"oslo": "^1.2.1",
+		"three": "^0.177.0"
 	}
 }

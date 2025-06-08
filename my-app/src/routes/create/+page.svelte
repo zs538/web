@@ -49,12 +49,142 @@
   let textareaElement: HTMLTextAreaElement;
   let hasScroll = false;
 
-  // Check if textarea has scrollable content
+  // Custom scrollbar variables
+  let scrollbarTrack: HTMLElement;
+  let scrollbarThumb: HTMLElement;
+  let isScrollbarDragging = false;
+  let scrollbarDragStartY = 0;
+  let scrollbarDragStartScrollTop = 0;
+  let isUpdatingFromScrollbar = false;
+  let lastScrollTop = 0;
+  let resizeThrottleFrame: number | null = null;
+  let mutationThrottleFrame: number | null = null;
+
+  // Check if textarea has scrollable content and update custom scrollbar
   function checkTextareaScroll(): void {
-    if (textareaElement) {
+    if (textareaElement && !isUpdatingFromScrollbar) {
       // Check if the scrollHeight is greater than the clientHeight
       hasScroll = textareaElement.scrollHeight > textareaElement.clientHeight;
+
+      // Only update if scroll position actually changed
+      if (Math.abs(textareaElement.scrollTop - lastScrollTop) > 1) {
+        lastScrollTop = textareaElement.scrollTop;
+        updateScrollbarImmediate();
+      }
     }
+  }
+
+  // Immediate scrollbar update for smooth mousewheel scrolling
+  function updateScrollbarImmediate(): void {
+    if (!textareaElement || !scrollbarTrack || !scrollbarThumb) return;
+
+    const scrollTop: number = textareaElement.scrollTop;
+    const scrollHeight: number = textareaElement.scrollHeight;
+    const clientHeight: number = textareaElement.clientHeight;
+
+    if (scrollHeight <= clientHeight) {
+      scrollbarThumb.style.display = 'none';
+      return;
+    }
+
+    scrollbarThumb.style.display = 'block';
+
+    // Calculate thumb height as a percentage of track height
+    const thumbHeight: number = Math.max(20, (clientHeight / scrollHeight) * scrollbarTrack.clientHeight);
+    scrollbarThumb.style.height = `${thumbHeight}px`;
+
+    // Calculate thumb position
+    const maxScrollTop: number = scrollHeight - clientHeight;
+    const scrollPercentage: number = maxScrollTop > 0 ? scrollTop / maxScrollTop : 0;
+    const maxThumbTop: number = scrollbarTrack.clientHeight - thumbHeight;
+    const thumbTop: number = scrollPercentage * maxThumbTop;
+
+    scrollbarThumb.style.top = `${thumbTop}px`;
+  }
+
+  // Throttled scrollbar update for resize operations only
+  function updateScrollbar(): void {
+    updateScrollbarImmediate();
+  }
+
+  // Handle scrollbar thumb drag
+  function handleScrollbarMouseDown(e: MouseEvent): void {
+    if (!textareaElement || !scrollbarTrack) return;
+
+    isScrollbarDragging = true;
+    scrollbarDragStartY = e.clientY;
+    scrollbarDragStartScrollTop = textareaElement.scrollTop;
+
+    document.addEventListener('mousemove', handleScrollbarMouseMove);
+    document.addEventListener('mouseup', handleScrollbarMouseUp);
+    e.preventDefault();
+  }
+
+  function handleScrollbarMouseMove(e: MouseEvent): void {
+    if (!isScrollbarDragging || !textareaElement || !scrollbarTrack || !scrollbarThumb) return;
+
+    // Prevent feedback loops
+    isUpdatingFromScrollbar = true;
+
+    const deltaY: number = e.clientY - scrollbarDragStartY;
+    const trackHeight: number = scrollbarTrack.clientHeight;
+    const thumbHeight: number = scrollbarThumb.clientHeight;
+    const maxThumbTop: number = trackHeight - thumbHeight;
+
+    // Calculate scroll position based on thumb movement
+    const scrollPercentage: number = maxThumbTop > 0 ? deltaY / maxThumbTop : 0;
+    const maxScrollTop: number = textareaElement.scrollHeight - textareaElement.clientHeight;
+    const newScrollTop: number = Math.max(0, Math.min(maxScrollTop, scrollbarDragStartScrollTop + (scrollPercentage * maxScrollTop)));
+
+    // Only update if the scroll position actually changed significantly
+    if (Math.abs(newScrollTop - textareaElement.scrollTop) > 1) {
+      textareaElement.scrollTop = newScrollTop;
+      lastScrollTop = newScrollTop;
+
+      // Update thumb position directly for smoother dragging
+      const currentScrollPercentage: number = maxScrollTop > 0 ? newScrollTop / maxScrollTop : 0;
+      const currentMaxThumbTop: number = trackHeight - thumbHeight;
+      const currentThumbTop: number = currentScrollPercentage * currentMaxThumbTop;
+      scrollbarThumb.style.top = `${currentThumbTop}px`;
+    }
+
+    // Reset flag immediately after update
+    isUpdatingFromScrollbar = false;
+  }
+
+  function handleScrollbarMouseUp(): void {
+    isScrollbarDragging = false;
+    isUpdatingFromScrollbar = false;
+    document.removeEventListener('mousemove', handleScrollbarMouseMove);
+    document.removeEventListener('mouseup', handleScrollbarMouseUp);
+
+    // Final update to ensure everything is in sync
+    updateScrollbar();
+  }
+
+  // Handle clicks on scrollbar track
+  function handleScrollbarTrackClick(e: MouseEvent): void {
+    if (!textareaElement || !scrollbarTrack || !scrollbarThumb || e.target === scrollbarThumb) return;
+
+    isUpdatingFromScrollbar = true;
+
+    const trackRect: DOMRect = scrollbarTrack.getBoundingClientRect();
+    const clickY: number = e.clientY - trackRect.top;
+    const thumbHeight: number = scrollbarThumb.clientHeight;
+    const trackHeight: number = scrollbarTrack.clientHeight;
+
+    // Calculate target scroll position
+    const targetThumbTop: number = Math.max(0, Math.min(trackHeight - thumbHeight, clickY - thumbHeight / 2));
+    const scrollPercentage: number = (trackHeight - thumbHeight) > 0 ? targetThumbTop / (trackHeight - thumbHeight) : 0;
+    const maxScrollTop: number = textareaElement.scrollHeight - textareaElement.clientHeight;
+
+    const newScrollTop: number = scrollPercentage * maxScrollTop;
+    textareaElement.scrollTop = newScrollTop;
+    lastScrollTop = newScrollTop;
+
+    // Reset flag and update
+    isUpdatingFromScrollbar = false;
+    updateScrollbar();
   }
 
   // Run initial check when component mounts
@@ -64,14 +194,37 @@
     // Add event listener for resize
     window.addEventListener('resize', checkTextareaScroll);
 
-    // Add event listener for the textarea's resize event
+    // Add event listener for the textarea's resize event with throttling
     const resizeObserver = new ResizeObserver((): void => {
-      checkTextareaScroll();
+      // Cancel any pending resize updates
+      if (resizeThrottleFrame) {
+        cancelAnimationFrame(resizeThrottleFrame);
+      }
+
+      // Throttle resize updates to prevent lag during rapid resizing
+      resizeThrottleFrame = requestAnimationFrame(() => {
+        checkTextareaScroll();
+        // Also update scrollbar track height when textarea is resized
+        if (textareaElement && scrollbarTrack) {
+          const textareaHeight: number = textareaElement.offsetHeight;
+          scrollbarTrack.style.height = `${textareaHeight}px`;
+        }
+        resizeThrottleFrame = null;
+      });
     });
 
     if (textareaElement) {
       resizeObserver.observe(textareaElement);
     }
+
+    // Initial scrollbar setup
+    setTimeout(() => {
+      if (textareaElement && scrollbarTrack) {
+        const textareaHeight: number = textareaElement.offsetHeight;
+        scrollbarTrack.style.height = `${textareaHeight}px`;
+      }
+      updateScrollbar();
+    }, 0);
 
     // Cleanup
     return (): void => {
@@ -79,6 +232,19 @@
       resizeObserver.disconnect();
       if (mutationObserver) {
         mutationObserver.disconnect();
+      }
+      // Clean up scrollbar event listeners
+      document.removeEventListener('mousemove', handleScrollbarMouseMove);
+      document.removeEventListener('mouseup', handleScrollbarMouseUp);
+
+      // Cancel any pending animation frames
+      if (resizeThrottleFrame) {
+        cancelAnimationFrame(resizeThrottleFrame);
+        resizeThrottleFrame = null;
+      }
+      if (mutationThrottleFrame) {
+        cancelAnimationFrame(mutationThrottleFrame);
+        mutationThrottleFrame = null;
       }
     };
   });
@@ -412,6 +578,22 @@
     setTimeout(checkTextareaScroll, 0);
   }
 
+  // Update scrollbar track height to match textarea height (throttled)
+  $: if (textareaElement && scrollbarTrack) {
+    // Cancel any pending reactive updates
+    if (resizeThrottleFrame) {
+      cancelAnimationFrame(resizeThrottleFrame);
+    }
+
+    // Throttle reactive updates to prevent excessive calls
+    resizeThrottleFrame = requestAnimationFrame(() => {
+      const textareaHeight: number = textareaElement.offsetHeight;
+      scrollbarTrack.style.height = `${textareaHeight}px`;
+      updateScrollbar();
+      resizeThrottleFrame = null;
+    });
+  }
+
   // Add a mutation observer to detect style changes (for manual resizing)
   let mutationObserver: MutationObserver;
 
@@ -425,7 +607,21 @@
       );
 
       if (styleChanged) {
-        checkTextareaScroll();
+        // Cancel any pending mutation updates
+        if (mutationThrottleFrame) {
+          cancelAnimationFrame(mutationThrottleFrame);
+        }
+
+        // Throttle mutation updates to prevent lag during rapid style changes
+        mutationThrottleFrame = requestAnimationFrame(() => {
+          checkTextareaScroll();
+          // Update scrollbar track height when style changes (manual resize)
+          if (scrollbarTrack) {
+            const textareaHeight: number = textareaElement.offsetHeight;
+            scrollbarTrack.style.height = `${textareaHeight}px`;
+          }
+          mutationThrottleFrame = null;
+        });
       }
     });
 
@@ -474,6 +670,21 @@
       ></textarea>
       <div class="char-counter {postText.length === MAX_CHARS ? 'at-limit' : ''} {hasScroll ? 'has-scroll' : ''}">
         {postText.length}/{MAX_CHARS}
+      </div>
+
+      <!-- Custom Scrollbar - Positioned absolutely outside -->
+      <div class="custom-scrollbar" class:visible={hasScroll}>
+        <div
+          class="scrollbar-track"
+          bind:this={scrollbarTrack}
+          on:mousedown={handleScrollbarTrackClick}
+        >
+          <div
+            class="scrollbar-thumb"
+            bind:this={scrollbarThumb}
+            on:mousedown={handleScrollbarMouseDown}
+          ></div>
+        </div>
       </div>
     </div>
 
@@ -691,7 +902,15 @@
     font-size: 1.1rem;
     line-height: 1.5;
     box-sizing: border-box;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    /* Hide native scrollbar */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  /* Hide native scrollbar for WebKit browsers */
+  textarea::-webkit-scrollbar {
+    display: none;
   }
 
   textarea:focus {
@@ -699,6 +918,50 @@
     border: 1px dashed #3498db;
     background-color: #f0f7fc;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar {
+    position: absolute;
+    right: -20px; /* Position outside the container */
+    top: 0;
+    width: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .custom-scrollbar.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .scrollbar-track {
+    width: 100%;
+    min-height: 180px; /* Match textarea min-height initially */
+    background: #f0f0f0;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .scrollbar-thumb {
+    width: 100%;
+    background: #ccc;
+    position: absolute;
+    top: 0;
+    cursor: grab;
+    min-height: 20px;
+    transition: background-color 0.15s ease;
+  }
+
+  .scrollbar-thumb:hover {
+    background: #999;
+  }
+
+  .scrollbar-thumb:active {
+    cursor: grabbing;
+    background: #777;
   }
 
   .char-counter {
@@ -710,6 +973,7 @@
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     transition: background-color 0.2s ease;
+    pointer-events: none; /* Prevent interference with scrollbar */
   }
 
   /* Add white background only when textarea has scroll */
