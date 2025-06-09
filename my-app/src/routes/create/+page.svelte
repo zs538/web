@@ -3,7 +3,7 @@
   import { slide } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import { quintOut } from 'svelte/easing';
-  import { navigate } from '$lib/utils/navigation';
+  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
 
   // Define media item types for TypeScript
@@ -646,9 +646,9 @@
 
         // If the post was created successfully, redirect to home page
         if (result.type === 'success' && result.data?.success) {
-          // Use navigate function for smoother transition
+          // Use goto function for navigation
           // We'll keep the button in "Posting..." state until navigation completes
-          await navigate('/');
+          await goto('/');
         } else {
           // Only reset isSubmitting if there was an error
           isSubmitting = false;

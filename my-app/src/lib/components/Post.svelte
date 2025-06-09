@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { galleryActions, type GalleryImage } from '$lib/stores/galleryStore';
+  import { hoverActions } from '$lib/stores/hoverStore';
+  import { getMediaInfo, formatDate, formatTime, getPostContentTypes } from '$lib/utils/media-utils';
   import MediaEmbed from './MediaEmbed.svelte';
   import AudioPlayer from './AudioPlayer.svelte';
 
@@ -17,6 +19,9 @@
       position: number;
     }>;
   };
+
+  let postElement: HTMLElement;
+  let postsContainer: HTMLElement;
 
 
 
@@ -39,6 +44,63 @@
     if (clickedIndex !== -1) {
       galleryActions.openGallery(postImages, clickedIndex);
     }
+  }
+
+  // Handle post hover
+  function handlePostMouseEnter(event: MouseEvent) {
+    if (!postElement) return;
+
+    const rect = postElement.getBoundingClientRect();
+    const positionX = Math.round(event.clientX - rect.left);
+    const positionY = Math.round(event.clientY - rect.top);
+
+    hoverActions.setHoverInfo({
+      username: post.author.username,
+      date: formatDate(post.createdAt),
+      time: formatTime(post.createdAt),
+      positionX,
+      positionY,
+      types: getPostContentTypes(post)
+    });
+  }
+
+  // Handle post mouse move to update position
+  function handlePostMouseMove(event: MouseEvent) {
+    if (!postElement) return;
+
+    const rect = postElement.getBoundingClientRect();
+    const positionX = Math.round(event.clientX - rect.left);
+    const positionY = Math.round(event.clientY - rect.top);
+
+    hoverActions.updatePosition(positionX, positionY);
+  }
+
+  // Handle post mouse leave
+  function handlePostMouseLeave() {
+    hoverActions.clearHoverInfo();
+  }
+
+  // Handle media hover
+  async function handleMediaMouseEnter(event: MouseEvent, media: any) {
+    if (!postElement) return;
+
+    const rect = postElement.getBoundingClientRect();
+    const positionX = Math.round(event.clientX - rect.left);
+    const positionY = Math.round(event.clientY - rect.top);
+
+    // Get media info
+    const mediaElement = event.target as HTMLElement;
+    const mediaInfo = await getMediaInfo(mediaElement, media.type, media.url, media.caption);
+
+    hoverActions.setHoverInfo({
+      username: post.author.username,
+      date: formatDate(post.createdAt),
+      time: formatTime(post.createdAt),
+      positionX,
+      positionY,
+      types: getPostContentTypes(post),
+      media: mediaInfo
+    });
   }
 
 
@@ -153,7 +215,13 @@
   }
 </script>
 
-<article class="post">
+<article
+  class="post"
+  bind:this={postElement}
+  on:mouseenter={handlePostMouseEnter}
+  on:mousemove={handlePostMouseMove}
+  on:mouseleave={handlePostMouseLeave}
+>
   <!-- Media Gallery -->
   {#if post.media?.length > 0}
     <div class="media-container">
@@ -163,6 +231,7 @@
             <button
               class="image-button"
               on:click={() => handleImageClick(media)}
+              on:mouseenter={(e) => handleMediaMouseEnter(e, media)}
               aria-label="Open image in gallery"
             >
               <img
@@ -179,20 +248,25 @@
               data-src={media.url}
               preload="none"
               class="video-element"
+              on:mouseenter={(e) => handleMediaMouseEnter(e, media)}
             >
               <track kind="captions" label="Captions" />
             </video>
           {:else if media.type === 'audio'}
-            <AudioPlayer
-              src={media.url}
-              title={media.caption || 'Audio'}
-              preload="metadata"
-            />
+            <div on:mouseenter={(e) => handleMediaMouseEnter(e, media)}>
+              <AudioPlayer
+                src={media.url}
+                title={media.caption || 'Audio'}
+                preload="metadata"
+              />
+            </div>
           {:else if media.type === 'embed'}
-            <MediaEmbed
-              url={media.url}
-              title={media.caption || "Embedded content"}
-            />
+            <div on:mouseenter={(e) => handleMediaMouseEnter(e, media)}>
+              <MediaEmbed
+                url={media.url}
+                title={media.caption || "Embedded content"}
+              />
+            </div>
           {/if}
         </div>
       {/each}
