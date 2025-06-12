@@ -109,7 +109,7 @@
     width: 100%;
     height: 100%;
     border: none;
-    background: #f6f6f6;
+    background: #f6f6f6 ;
   }
 
   /* Spotify embed with fixed height based on content type */

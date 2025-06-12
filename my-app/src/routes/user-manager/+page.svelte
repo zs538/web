@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { fade, slide } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import AddUserForm from '$lib/components/AddUserForm.svelte';
   import { activeDropdown } from '$lib/stores/dropdownStore';
   import type { User } from '$lib/server/db/schema';
+  import { browser } from '$app/environment';
 
   // Get data from server
   export let data: { users: User[]; totalCount: number };
@@ -514,6 +515,12 @@
 
   // Initialize
   onMount((): (() => void) => {
+    // Disable scrolling on the page
+    if (browser) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+
     // Calculate optimal rows per page based on viewport
     rowsPerPage = calculateRowsPerPage();
     totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
@@ -553,6 +560,15 @@
       clearMessageTimer();
       if (debounceTimer) clearTimeout(debounceTimer);
     };
+  });
+
+  // Clean up resources when component is destroyed
+  onDestroy(() => {
+    // Re-enable scrolling when leaving the page
+    if (browser) {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
   });
 </script>
 
@@ -982,6 +998,9 @@
     width: 500px;
     margin: 0 auto;
     padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    box-sizing: border-box;
   }
 
   h1 {
