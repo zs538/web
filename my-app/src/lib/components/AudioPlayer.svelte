@@ -24,7 +24,7 @@
 
   // Format time in MM:SS format
   function formatTime(seconds: number): string {
-    if (isNaN(seconds)) return '0:00';
+    if (isNaN(seconds) || seconds < 0 || !isFinite(seconds)) return '0:00';
 
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
@@ -176,6 +176,19 @@
     audio.volume = volume;
   }
 
+  // Additional handler to ensure duration is loaded
+  function handleLoadedData(): void {
+    if (!duration || isNaN(duration)) {
+      duration = audio.duration;
+    }
+  }
+
+  function handleCanPlay(): void {
+    if (!duration || isNaN(duration)) {
+      duration = audio.duration;
+    }
+  }
+
   function handlePlay(): void {
     isPlaying = true;
     // Set this audio as the active player when it starts playing
@@ -229,6 +242,8 @@
     {src}
     {preload}
     on:loadedmetadata={handleLoadedMetadata}
+    on:loadeddata={handleLoadedData}
+    on:canplay={handleCanPlay}
     on:play={handlePlay}
     on:pause={handlePause}
     on:ended={handleEnded}
@@ -423,7 +438,7 @@
     flex-direction: column;
     justify-content: space-between;
     min-width: 0; /* Allow flex item to shrink below its content size */
-    overflow: hidden; /* Prevent overflow from this container */
+    overflow: visible; /* Allow time display to be fully visible */
   }
 
   .audio-title {
@@ -441,6 +456,8 @@
     color: #666;
     white-space: nowrap;
     margin-bottom: 0;
+    flex-shrink: 0; /* Prevent time display from shrinking */
+    min-width: fit-content; /* Ensure it takes the space it needs */
   }
 
   .time-separator {
@@ -483,6 +500,7 @@
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.2s;
+    margin-top: -3px; /* Center the thumb on the track (10px thumb - 4px track = 6px difference / 2 = 3px) */
   }
 
   .seek-slider:hover::-webkit-slider-thumb {
@@ -498,6 +516,7 @@
     border: none;
     opacity: 0;
     transition: opacity 0.2s;
+    margin-top: -3px; /* Center the thumb on the track (10px thumb - 4px track = 6px difference / 2 = 3px) */
   }
 
   .seek-slider:hover::-moz-range-thumb {
@@ -596,7 +615,7 @@
     outline: none;
     border-radius: 0;
     cursor: pointer;
-    margin: 2px 0;
+    margin: 5px 0; /* Increased margin to accommodate 10px thumb (5px above + 4px track + 5px below = 14px total) */
   }
 
   .volume-slider::-webkit-slider-thumb {
@@ -608,6 +627,7 @@
     border-radius: 50%;
     cursor: pointer;
     opacity: 1;
+    margin-top: -3px; /* Center the thumb on the track (10px thumb - 4px track = 6px difference / 2 = 3px) */
   }
 
   .volume-slider::-moz-range-thumb {
@@ -618,6 +638,7 @@
     cursor: pointer;
     border: none;
     opacity: 1;
+    margin-top: -3px; /* Center the thumb on the track (10px thumb - 4px track = 6px difference / 2 = 3px) */
   }
 
   .volume-slider::-webkit-slider-runnable-track {
