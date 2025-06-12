@@ -3,6 +3,7 @@
   import { fade, slide } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import { activeLogDetails } from '$lib/stores/logDetailsStore';
+  import { browser } from '$app/environment';
 
   // Define log interface
   interface LogEntry {
@@ -455,6 +456,12 @@
 
   // Initialize with server data
   onMount(() => {
+    // Disable scrolling on the page
+    if (browser) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+
     // Calculate optimal rows per page based on viewport
     rowsPerPage = calculateRowsPerPage();
     totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
@@ -517,6 +524,12 @@
 
   // Clean up resources when component is destroyed
   onDestroy(() => {
+    // Re-enable scrolling when leaving the page
+    if (browser) {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+
     // Clean up event listener (only in browser)
     if (typeof document !== 'undefined') {
       document.removeEventListener('click', handleClickOutside);
@@ -907,6 +920,9 @@
     max-width: 500px;
     margin: 0 auto;
     padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    box-sizing: border-box;
   }
 
   h1 {
