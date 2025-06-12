@@ -213,7 +213,8 @@
     // Temporarily disable reactive updates
     initialized = false;
 
-    // Reset all filter values
+    // Reset all filter values including search query
+    searchQuery = '';
     filterAction = '';
     filterTargetTable = '';
     filterStartDate = '';

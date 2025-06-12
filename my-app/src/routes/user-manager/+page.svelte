@@ -115,7 +115,8 @@
 
   // Reset filters to default
   function resetFilters() {
-    // Keep searchQuery as is since it's now separate from the filter menu
+    // Reset all filters including search query
+    searchQuery = '';
     filterRole = 'all';
     filterStatus = 'all';
     filterSort = 'newest';
