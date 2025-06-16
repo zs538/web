@@ -346,9 +346,7 @@
   }
 
   .input-container {
-    border-top: 1px solid #333;
     padding: 20px 0 0 0;
-    background: #000;
     position: sticky;
     bottom: 0;
   }
@@ -369,17 +367,22 @@
 
   .input-row input {
     flex: 1;
-    padding: 12px;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 4px;
-    color: #fff;
+    padding: 8px 10px;
     font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 0;
+    box-sizing: border-box;
+    font-family: 'SuisseIntl', sans-serif;
+    font-weight: 300;
+    color: #333;
+    background-color: #ffffff;
+    transition: all 0.15s ease;
   }
 
   .input-row input:focus {
     outline: none;
-    border-color: #555;
+    border-color: #3498db;
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
   }
 
   .input-row input:disabled {
@@ -388,22 +391,24 @@
   }
 
   .input-row button {
-    padding: 12px 20px;
+    padding: 0;
     background: #333;
-    border: 1px solid #555;
-    border-radius: 4px;
-    color: #fff;
+    color: white;
+    border: none;
     cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
+    font-family: inherit;
+    width: 110px;
+    height: 40px;
+    text-align: center;
+    transition: background-color 0.15s ease;
   }
 
   .input-row button:hover:not(:disabled) {
-    background: #444;
+    background: #555;
   }
 
   .input-row button:disabled {
-    opacity: 0.5;
+    background: #999;
     cursor: not-allowed;
   }
 
