@@ -274,6 +274,7 @@
     flex-direction: column;
     height: calc(100vh - 40px);
     max-width: 100%;
+    background-color: #ffffff;
   }
 
   .messages-container {
@@ -282,19 +283,21 @@
     padding: 20px 0 20px 0;
     display: flex;
     flex-direction: column;
+    background-color: #ffffff;
   }
 
   .message {
     margin-bottom: 15px;
     padding: 10px;
-    background: #1a1a1a;
+    background: #ffffff;
     border-radius: 8px;
-    border-left: 3px solid #444;
+    border: 1px solid #ccc;
+    border-left: 3px solid #3498db;
   }
 
   .message.own-message {
-    background: #2a2a2a;
-    border-left-color: #666;
+    background: #f8f9fa;
+    border-left-color: #333;
   }
 
   .message-header {
@@ -306,7 +309,7 @@
 
   .username {
     font-weight: bold;
-    color: #fff;
+    color: #333;
     font-size: 14px;
   }
 
@@ -316,7 +319,7 @@
   }
 
   .message-content {
-    color: #ddd;
+    color: #333;
     line-height: 1.4;
     word-wrap: break-word;
   }
@@ -333,7 +336,8 @@
     padding: 10px;
     color: #888;
     font-size: 14px;
-    background: #1a1a1a;
+    background: #f8f9fa;
+    border: 1px solid #ccc;
     border-radius: 4px;
     margin-bottom: 10px;
   }
@@ -418,15 +422,15 @@
   }
 
   .messages-container::-webkit-scrollbar-track {
-    background: #1a1a1a;
+    background: #f8f9fa;
   }
 
   .messages-container::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #ccc;
     border-radius: 3px;
   }
 
   .messages-container::-webkit-scrollbar-thumb:hover {
-    background: #444;
+    background: #999;
   }
 </style>
