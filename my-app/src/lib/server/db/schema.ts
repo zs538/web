@@ -44,6 +44,14 @@ import {
 	uploadedAt: integer('uploaded_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`)
   });
 
+  // --- Chat Message Table ---
+  export const chatMessage = sqliteTable('chat_message', {
+	id: text('id').primaryKey(),
+	authorId: text('author_id').notNull().references(() => user.id),
+	message: text('message').notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`)
+  });
+
   // --- Audit Log Table ---
   export const auditLog = sqliteTable('audit_log', {
 	id: text('id').primaryKey(),
@@ -60,6 +68,7 @@ import {
   export type Session = typeof session.$inferSelect;
   export type Post = typeof post.$inferSelect;
   export type Media = typeof media.$inferSelect;
+  export type ChatMessage = typeof chatMessage.$inferSelect;
   export type AuditLog = typeof auditLog.$inferSelect;
 
   // --- Relations ---
@@ -75,5 +84,12 @@ import {
 	post: one(post, {
 	  fields: [media.postId],
 	  references: [post.id]
+	})
+  }));
+
+  export const chatMessageRelations = relations(chatMessage, ({ one }) => ({
+	author: one(user, {
+	  fields: [chatMessage.authorId],
+	  references: [user.id]
 	})
   }));

@@ -1,49 +1,60 @@
 <script lang="ts">
   import { browser } from '$app/environment';
   import ImageGallery from '$lib/components/ImageGallery.svelte';
-  import InfoBar from '$lib/components/InfoBar.svelte';
-  import { onMount } from 'svelte';
   import { page } from '$app/stores';
-
-  let lastScrollY = 0;
-  let stickyTop = 0;
+  import { onMount } from 'svelte';
+  import { fade, slide } from 'svelte/transition';
+  import { quintOut } from 'svelte/easing';
+  import { goto } from '$app/navigation';
 
   // Get user data from page store
   $: user = $page.data.user;
   $: isLoggedIn = !!user;
   $: isAdmin = user?.role === 'admin';
 
-  onMount(() => {
-    if (!browser) return;
+  // Logout confirmation popup state
+  let showLogoutConfirm = false;
+  let isLoggingOut = false;
 
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+  function openLogoutConfirm() {
+    showLogoutConfirm = true;
+  }
 
-      if (currentScrollY > lastScrollY && currentScrollY > 48) {
-        // Scrolling down and past the bar height - move bar up (include border)
-        stickyTop = -49;
-      } else if (currentScrollY < lastScrollY) {
-        // Scrolling up - bring bar back
-        stickyTop = 0;
-      } else if (currentScrollY <= 48) {
-        // At the top - normal position
-        stickyTop = 0;
+  function closeLogoutConfirm() {
+    showLogoutConfirm = false;
+  }
+
+  // Handle click outside to close popup
+  function handleClickOutside(event: MouseEvent) {
+    if (event.target instanceof Element) {
+      if (showLogoutConfirm && event.target.classList.contains('confirm-dialog-backdrop')) {
+        closeLogoutConfirm();
       }
+    }
+  }
 
-      lastScrollY = currentScrollY;
-    };
+  // Handle logout confirmation
+  async function confirmLogout() {
+    isLoggingOut = true;
+    try {
+      // Navigate to logout endpoint
+      await goto('/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+      isLoggingOut = false;
+    }
+  }
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+  // Initialize click handler
+  onMount(() => {
+    if (browser) {
+      document.addEventListener('click', handleClickOutside);
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }
   });
 </script>
-
-<!-- Top Bar -->
-<div class="top-bar" style="top: {stickyTop}px">
-</div>
 
 <!-- Left Navigation Bar -->
 <nav class="left-nav">
@@ -52,6 +63,7 @@
   {#if isLoggedIn}
     <a href="/myposts" class="nav-link">My Posts</a>
     <a href="/create" class="nav-link">Create</a>
+    <a href="/chat" class="nav-link">Chat</a>
   {/if}
 
   {#if isAdmin}
@@ -60,7 +72,7 @@
   {/if}
 
   {#if isLoggedIn}
-    <a href="/logout" class="nav-link">Logout</a>
+    <button class="nav-link logout-btn" on:click={openLogoutConfirm}>Logout</button>
   {:else}
     <a href="/login" class="nav-link">Login</a>
   {/if}
@@ -74,9 +86,6 @@
   {/if}
 </nav>
 
-<!-- Right Info Bar -->
-<InfoBar />
-
 <div class="container">
   <main class="main-content">
     <slot />
@@ -86,6 +95,23 @@
 <!-- Global Image Gallery - only render on client side -->
 {#if browser}
   <ImageGallery />
+{/if}
+
+<!-- Logout Confirmation Popup -->
+{#if showLogoutConfirm}
+  <div class="confirm-dialog-backdrop" transition:fade={{ duration: 300, easing: quintOut }}>
+    <div class="confirm-dialog" transition:slide={{ duration: 200, easing: quintOut }}>
+      <h3>Confirm Logout</h3>
+      <p>Are you sure you want to log out?</p>
+
+      <div class="confirm-actions">
+        <button type="button" class="cancel-btn" on:click={closeLogoutConfirm}>Cancel</button>
+        <button type="button" class="confirm-btn" on:click={confirmLogout} disabled={isLoggingOut}>
+          {isLoggingOut ? 'Logging out...' : 'Logout'}
+        </button>
+      </div>
+    </div>
+  </div>
 {/if}
 
 <style>
@@ -123,29 +149,16 @@
 
 
 
-  .top-bar {
-    position: sticky;
-    left: calc(50% - 250px); /* Same positioning as main content */
-    width: 500px;
-    height: 48px;
-    background-color: #fff;
-    border-bottom: 1px solid #ddd;
-    z-index: 100;
-    transition: top 0.3s ease;
-  }
-
   .left-nav {
     position: fixed;
-    left: calc(50% - 250px - 180px); /* Pull back a bit from main content */
+    left: 0; /* Move to very left of screen */
     top: 0;
     width: 180px;
     height: 100vh;
     background-color: #fff;
     display: flex;
     flex-direction: column;
-    padding: 0 20px 20px 20px; /* No top padding, 20px on other sides */
-    margin-top: 48px; /* Top margin matches top bar height (48px) */
-    border-top: 1px solid #ddd; /* Top line - total spacing = 48px + 1px = 49px */
+    padding: 20px;
     box-sizing: border-box;
     z-index: 50;
   }
@@ -161,6 +174,13 @@
 
   .nav-link:hover {
     opacity: 0.7;
+  }
+
+  .logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
   }
 
   .nav-spacer {
@@ -189,63 +209,128 @@
     width: 100%;
   }
 
-  /* Add left vertical line for main content */
-  .container::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: calc(50% - 250px); /* Left edge of main content */
-    width: 1px;
-    background-color: #ddd;
-    z-index: 101;
-  }
 
-  /* Add right vertical line for main content */
-  .container::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: calc(50% - 250px); /* Right edge of main content */
-    width: 1px;
-    background-color: #ddd;
-    z-index: 101;
-  }
   .main-content {
-    width: 500px; /* 500px content width, no side padding */
+    width: 500px;
     min-height: 100vh;
-    padding: 0; /* Remove all padding since we have the top bar */
+    padding: 20px 0 0 0;
     margin: 0 auto;
     box-sizing: border-box;
   }
-  @media (max-width: 564px) {
-    .top-bar {
-      width: calc(100vw - 32px);
-      left: 16px;
-      transform: none;
+  @media (max-width: 768px) {
+    .left-nav {
+      /* Keep navigation on left side even on mobile */
+      left: 0;
+      width: 160px; /* Slightly smaller on mobile */
     }
 
-
-
     .main-content {
-      width: calc(100vw - 32px); /* Full width minus 16px padding on each side */
+      width: calc(100vw - 180px); /* Account for nav width */
       margin: 0;
-      padding: 0 16px; /* Remove top padding, keep only side padding */
+      padding: 20px 16px 0 16px;
     }
   }
-  @media (max-width: 768px) {
-    .top-bar {
-      width: calc(100vw - 32px);
-      left: 16px;
-      transform: none;
+
+  @media (max-width: 564px) {
+    .left-nav {
+      width: 140px; /* Even smaller on very small screens */
     }
-
-
 
     .main-content {
-      width: 100vw;
-      padding: 0 16px; /* Remove top padding, keep only side padding */
+      width: calc(100vw - 160px); /* Account for smaller nav width */
+      padding: 20px 16px 0 8px; /* Less left padding to avoid nav overlap */
     }
+  }
+
+  /* Logout Confirmation Popup styles - matching settings page */
+  .confirm-dialog-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    will-change: opacity, backdrop-filter;
+    transition: background-color 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+                backdrop-filter 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+                -webkit-backdrop-filter 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  .confirm-dialog {
+    background: white;
+    padding: 20px;
+    border-radius: 2px;
+    max-width: 400px;
+    width: 100%;
+    font-family: 'SuisseIntl', sans-serif;
+    font-weight: 300;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .confirm-dialog h3 {
+    font-family: 'ManifoldExtended', sans-serif;
+    margin-top: 0;
+    font-size: 1.2rem;
+    font-weight: normal;
+  }
+
+  .confirm-dialog p {
+    margin: 15px 0;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .cancel-btn {
+    padding: 0 0.5rem;
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 0;
+    color: #333;
+    cursor: pointer;
+    font-family: 'ManifoldExtended', sans-serif;
+    width: 130px;
+    height: 40px;
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+
+  .cancel-btn:hover {
+    background: rgba(51, 51, 51, 0.1);
+  }
+
+  .confirm-btn {
+    padding: 0 0.5rem;
+    background: transparent;
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: 'ManifoldExtended', sans-serif;
+    width: 130px;
+    height: 40px;
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+
+  .confirm-btn:hover:not(:disabled) {
+    background: rgba(231, 76, 60, 0.1);
+  }
+
+  .confirm-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 </style>
