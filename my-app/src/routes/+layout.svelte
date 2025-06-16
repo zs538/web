@@ -63,7 +63,6 @@
   {#if isLoggedIn}
     <a href="/myposts" class="nav-link">My Posts</a>
     <a href="/create" class="nav-link">Create</a>
-    <a href="/chat" class="nav-link">Chat</a>
   {/if}
 
   {#if isAdmin}
